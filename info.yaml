@@ -1,0 +1,9 @@
+info:
+  name: MiniGames
+  author: Ultra119
+  version: 1.0
+  description: Some stupid minigames collection
+  src_url: https://github.com/PBModular/MiniGames
+  python: 3.12.2
+permissions:
+  - require_db
