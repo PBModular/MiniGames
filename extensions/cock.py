@@ -11,7 +11,7 @@ class CockExtension(ModuleExtension):
     @property
     def db_meta(self):
         return Base.metadata  
-    
+
     async def set_participation(self, chat_id, user_id, is_participating):
         async with self.db.session_maker() as session:
             chat_state = await session.execute(select(ChatState).where(ChatState.chat_id == chat_id, ChatState.user_id == user_id))
@@ -35,7 +35,7 @@ class CockExtension(ModuleExtension):
         async with self.db.session_maker() as session:
             chat_state = await session.scalar(select(ChatState).where(ChatState.chat_id == chat_id, ChatState.user_id == user_id))
             if chat_state.cock_size is None:
-                chat_state.cock_size = 10
+                chat_state.cock_size = 5
             chat_state.cock_size += change
 
             session.add(chat_state)
@@ -45,9 +45,22 @@ class CockExtension(ModuleExtension):
         async with self.db.session_maker() as session:
             chat_state = await session.scalar(select(ChatState).where(ChatState.chat_id == chat_id, ChatState.user_id == user_id))
             if chat_state.cock_size is None:
-                chat_state.cock_size = 10
+                chat_state.cock_size = 5
             return chat_state.cock_size
-        
+
+    def calculate_change(self, current_length):
+        # Probability of increase decreases linearly from 95% at 0cm to 35% at 60cm
+        increase_probability = max(0.35, 0.95 - (current_length / 60) * 0.60)
+        rand_num = random.random()
+
+        if rand_num <= increase_probability:
+            change = random.randint(1, min(5, 60 - int(current_length)))
+        else:
+            max_decrease = max(1, current_length / 4)
+            change = -random.randint(1, int(max_decrease))
+
+        return change
+
     @command("cockjoin")
     async def join_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
@@ -82,11 +95,12 @@ class CockExtension(ModuleExtension):
             return
 
         user_id = random.choice(participants)
-        change = random.randint(-5, 5)
+        current_length = await self.get_cock_length(chat_id, user_id)
+        change = self.calculate_change(current_length)
 
         await self.set_cock_length(chat_id, user_id, change)
-        current_length = await self.get_cock_length(chat_id, user_id)
+        new_length = await self.get_cock_length(chat_id, user_id)
 
         user = await bot.get_users(user_id)
-        result_message = f"{user.first_name} теперь имеет член длиной {current_length} см (изменение: {change} см)."
+        result_message = f"{user.first_name} теперь имеет член длиной {new_length} см (изменение: {change} см)."
         await message.reply(result_message)
