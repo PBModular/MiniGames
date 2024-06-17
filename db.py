@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
 class ChatState(Base):
     __tablename__ = 'chat_state'
     chat_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(nullable=True)
+    user_id: Mapped[int] = mapped_column(primary_key=True)
     cock_size: Mapped[int] = mapped_column(nullable=True)
     is_participating: Mapped[bool]
 
