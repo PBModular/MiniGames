@@ -3,7 +3,7 @@ from pyrogram.types import Message
 from base.module import BaseModule, command
 from base.mod_ext import ModuleExtension
 from ..db import Base, CockState
-from sqlalchemy import select
+from sqlalchemy import select, delete
 import random
 
 class CockExtension(ModuleExtension):
@@ -86,8 +86,12 @@ class CockExtension(ModuleExtension):
         participants = await self.get_participants(chat_id)
 
         if user_id in participants:
-            await self.set_participation(chat_id, user_id, False)
-            await message.reply("Вы покинули игру!")
+            async with self.db.session_maker() as session:
+                await session.execute(
+                    delete(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+                )
+                await session.commit()
+            await message.reply("Ваш член был удалён, вы покинули игру!")
         else:
             await message.reply("Вы не состоите в игре!")
 
