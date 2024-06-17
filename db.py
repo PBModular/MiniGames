@@ -6,8 +6,8 @@ class Base(DeclarativeBase):
     pass
 
 
-class ChatState(Base):
-    __tablename__ = 'chat_state'
+class CockState(Base):
+    __tablename__ = 'cock_state'
     chat_id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(primary_key=True)
     cock_size: Mapped[int] = mapped_column(nullable=True)

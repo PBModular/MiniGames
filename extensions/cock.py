@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from base.module import BaseModule, command
 from base.mod_ext import ModuleExtension
-from ..db import Base, ChatState
+from ..db import Base, CockState
 from sqlalchemy import select
 import random
 
@@ -13,47 +13,47 @@ class CockExtension(ModuleExtension):
 
     async def set_participation(self, chat_id, user_id, is_participating):
         async with self.db.session_maker() as session:
-            chat_state = await session.execute(
-                select(ChatState).where(ChatState.chat_id == chat_id, ChatState.user_id == user_id)
+            cock_state = await session.execute(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
-            chat_state = chat_state.scalar_one_or_none()
+            cock_state = cock_state.scalar_one_or_none()
             
-            if chat_state is None:
-                chat_state = ChatState(chat_id=chat_id, user_id=user_id, is_participating=is_participating)
-                session.add(chat_state)
+            if cock_state is None:
+                cock_state = CockState(chat_id=chat_id, user_id=user_id, is_participating=is_participating)
+                session.add(cock_state)
             else:
-                chat_state.is_participating = is_participating
+                cock_state.is_participating = is_participating
             
             await session.commit()
 
     async def get_participants(self, chat_id):
         async with self.db.session_maker() as session:
             participants = await session.execute(
-                select(ChatState.user_id).where(ChatState.chat_id == chat_id, ChatState.is_participating == True)
+                select(CockState.user_id).where(CockState.chat_id == chat_id, CockState.is_participating == True)
             )
             participants = [participant[0] for participant in participants]
             return participants
 
     async def set_cock_length(self, chat_id, user_id, change):
         async with self.db.session_maker() as session:
-            chat_state = await session.scalar(
-                select(ChatState).where(ChatState.chat_id == chat_id, ChatState.user_id == user_id)
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
-            if chat_state.cock_size is None:
-                chat_state.cock_size = 5
-            chat_state.cock_size += change
+            if cock_state.cock_size is None:
+                cock_state.cock_size = 5
+            cock_state.cock_size += change
 
-            session.add(chat_state)
+            session.add(cock_state)
             await session.commit()
 
     async def get_cock_length(self, chat_id, user_id):
         async with self.db.session_maker() as session:
-            chat_state = await session.scalar(
-                select(ChatState).where(ChatState.chat_id == chat_id, ChatState.user_id == user_id)
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
-            if chat_state.cock_size is None:
-                chat_state.cock_size = 5
-            return chat_state.cock_size
+            if cock_state.cock_size is None:
+                cock_state.cock_size = 5
+            return cock_state.cock_size
 
     def calculate_change(self, current_length):
         increase_probability = max(0.35, 0.95 - (current_length / 60) * 0.60)
