@@ -41,7 +41,18 @@ class CockExtension(ModuleExtension):
             )
             if cock_state.cock_size is None:
                 cock_state.cock_size = 5
-            cock_state.cock_size += change
+
+            if cock_state.active_event == "rubber":
+                cock_state.cock_size = change
+            else:
+                cock_state.cock_size += change
+
+            cock_state.cock_size = round(cock_state.cock_size, 1)
+
+            if cock_state.event_duration > 0:
+                cock_state.event_duration -= 1
+                if cock_state.event_duration == 0:
+                    cock_state.active_event = None
 
             session.add(cock_state)
             await session.commit()
@@ -53,6 +64,8 @@ class CockExtension(ModuleExtension):
             )
             if cock_state.cock_size is None:
                 cock_state.cock_size = 5
+                session.add(cock_state)
+                await session.commit()
             return cock_state.cock_size
 
     async def get_all_participants(self, chat_id):
@@ -78,10 +91,49 @@ class CockExtension(ModuleExtension):
         if (rand_num <= increase_probability):
             change = random.randint(1, min(5, 60 - int(current_length)))
         else:
-            max_decrease = max(1, current_length / 4)
+            max_decrease = max(1, (current_length * 0.25))
             change = -random.randint(1, int(max_decrease))
 
         return change
+
+    async def check_special_events(self, chat_id, user_id, current_length):
+        async with self.db.session_maker() as session:
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+            )
+            if cock_state.active_event:
+                return None
+
+            possible_events = []
+
+            if current_length > 50 and random.random() < 0.05:
+                possible_events.append(self.event_micro)
+
+            if random.random() < 0.02:
+                possible_events.append(self.event_rubber)
+
+            if possible_events:
+                chosen_event = random.choice(possible_events)
+                special_event_message = await chosen_event(chat_id, user_id, current_length)
+                return special_event_message
+        
+            return None
+
+    async def event_micro(self, chat_id, user_id, current_length):
+        await self.set_cock_length(chat_id, user_id, -current_length + 0.1)
+        return "О нет, ваш член уменьшился до микроскопических размеров (0.1 см)!"
+
+    async def event_rubber(self, chat_id, user_id, current_length):
+        async with self.db.session_maker() as session:
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+            )
+            cock_state.active_event = "rubber"
+            cock_state.event_duration = 4
+            session.add(cock_state)
+            await session.commit()
+
+        return "Вы получили резиновый член на 4 хода! Каждый ход, он, случайным образом будет менять свою длину!"
 
     @command("cockjoin")
     async def join_cmd(self, bot: Client, message: Message):
@@ -115,6 +167,7 @@ class CockExtension(ModuleExtension):
     async def cock_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
         user_id = message.from_user.id
+        user = await bot.get_users(user_id)
         participants = await self.get_participants(chat_id)
 
         if user_id not in participants:
@@ -122,14 +175,26 @@ class CockExtension(ModuleExtension):
             return
 
         current_length = await self.get_cock_length(chat_id, user_id)
-        change = self.calculate_change(current_length)
+        special_event_message = await self.check_special_events(chat_id, user_id, current_length)
 
-        await self.set_cock_length(chat_id, user_id, change)
-        new_length = await self.get_cock_length(chat_id, user_id)
+        if special_event_message:
+            await message.reply(special_event_message)
+        else:
+            async with self.db.session_maker() as session:
+                cock_state = await session.scalar(
+                    select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+                )
+                if cock_state.active_event == "rubber" and cock_state.event_duration > 0:
+                    change = random.randint(1, 60)
+                    await self.set_cock_length(chat_id, user_id, change)
+                    result_message = f"{user.first_name}, ваш резиновый член изменился в длине и теперь составляет {change} см! Осталось {cock_state.event_duration - 1} ходов."
+                else:
+                    change = self.calculate_change(current_length)
+                    await self.set_cock_length(chat_id, user_id, change)
+                    new_length = await self.get_cock_length(chat_id, user_id)
+                    result_message = f"{user.first_name}, теперь ваш член длиной {new_length} см (изменение: {change} см)."
 
-        user = await bot.get_users(user_id)
-        result_message = f"{user.first_name}, теперь ваш член длиной {new_length} см (изменение: {change} см)."
-        await message.reply(result_message)
+                await message.reply(result_message)
 
     @command("cockstat")
     async def cockstat_cmd(self, bot: Client, message: Message):
@@ -149,3 +214,4 @@ class CockExtension(ModuleExtension):
         stats_message += f"\nСредняя длина члена: {average_length:.2f} см"
 
         await message.reply(stats_message)
+    
