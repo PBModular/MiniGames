@@ -3,7 +3,7 @@ from pyrogram.types import Message
 from base.module import BaseModule, command
 from base.mod_ext import ModuleExtension
 from ..db import Base, CockState
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 import random
 
 class CockExtension(ModuleExtension):
@@ -54,6 +54,22 @@ class CockExtension(ModuleExtension):
             if cock_state.cock_size is None:
                 cock_state.cock_size = 5
             return cock_state.cock_size
+
+    async def get_all_participants(self, chat_id):
+        async with self.db.session_maker() as session:
+            participants = await session.execute(
+                select(CockState.user_id, CockState.cock_size).where(CockState.chat_id == chat_id, CockState.is_participating == True)
+            )
+            participants = participants.all()
+            return participants
+
+    async def get_average_length(self, chat_id):
+        async with self.db.session_maker() as session:
+            avg_length = await session.execute(
+                select(func.avg(CockState.cock_size)).where(CockState.chat_id == chat_id, CockState.is_participating == True)
+            )
+            avg_length = avg_length.scalar()
+            return avg_length if avg_length is not None else 0
 
     def calculate_change(self, current_length):
         increase_probability = max(0.35, 0.95 - (current_length / 60) * 0.60)
@@ -114,3 +130,22 @@ class CockExtension(ModuleExtension):
         user = await bot.get_users(user_id)
         result_message = f"{user.first_name}, теперь ваш член длиной {new_length} см (изменение: {change} см)."
         await message.reply(result_message)
+
+    @command("cockstat")
+    async def cockstat_cmd(self, bot: Client, message: Message):
+        chat_id = message.chat.id
+        participants = await self.get_all_participants(chat_id)
+        average_length = await self.get_average_length(chat_id)
+
+        if not participants:
+            await message.reply("В игре пока нет участников.")
+            return
+
+        stats_message = "Список участников и длина их членов:\n"
+        for user_id, cock_length in participants:
+            user = await bot.get_users(user_id)
+            stats_message += f"{user.first_name}: {cock_length} см\n"
+
+        stats_message += f"\nСредняя длина члена: {average_length:.2f} см"
+
+        await message.reply(stats_message)
