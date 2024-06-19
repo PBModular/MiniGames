@@ -5,6 +5,7 @@ from base.mod_ext import ModuleExtension
 from ..db import Base, CockState
 from ..utils import fetch_user
 from sqlalchemy import select, delete, func
+from datetime import datetime, timedelta
 import random
 
 class CockExtension(ModuleExtension):
@@ -222,16 +223,25 @@ class CockExtension(ModuleExtension):
             await message.reply("Вы не участвуете в игре.")
             return
 
-        current_length = await self.get_cock_length(chat_id, user_id)
-        special_event_message = await self.check_special_events(chat_id, user_id, current_length)
+        async with self.db.session_maker() as session:
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+            )
 
-        if special_event_message:
-            await message.reply(special_event_message)
-        else:
-            async with self.db.session_maker() as session:
-                cock_state = await session.scalar(
-                    select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
-                )
+            now = datetime.utcnow()
+            if cock_state.cooldown and now - cock_state.cooldown < timedelta(hours=24):
+                time_remaining = timedelta(hours=24) - (now - cock_state.cooldown)
+                hours, remainder = divmod(time_remaining.seconds, 3600)
+                minutes, _ = divmod(remainder, 60)
+                await message.reply(f"Команду можно использовать только раз в 24 часа. Осталось ждать: {hours}ч. {minutes}м.")
+                return
+
+            current_length = await self.get_cock_length(chat_id, user_id)
+            special_event_message = await self.check_special_events(chat_id, user_id, current_length)
+
+            if special_event_message:
+                await message.reply(special_event_message)
+            else:
                 if cock_state.active_event == "rubber" and cock_state.event_duration > 0:
                     change = random.randint(1, 60)
                     await self.set_cock_length(chat_id, user_id, change)
@@ -249,6 +259,10 @@ class CockExtension(ModuleExtension):
                     await self.set_cock_length(chat_id, user_id, change)
                     new_length = await self.get_cock_length(chat_id, user_id)
                     result_message = f"Теперь ваш член длиной {new_length} см (изменение: {change} см)."
+
+                cock_state.cooldown = now
+                session.add(cock_state)
+                await session.commit()
 
                 await message.reply(result_message)
 
