@@ -106,11 +106,20 @@ class CockExtension(ModuleExtension):
 
             possible_events = []
 
-            if current_length > 50 and random.random() < 0.05:
+            if current_length > 35 and random.random() < 0.03:
                 possible_events.append(self.event_micro)
 
             if random.random() < 0.02:
                 possible_events.append(self.event_rubber)
+
+            if random.random() < 0.01:
+                possible_events.append(self.event_teleport)
+
+            if random.random() < 0.04:
+                possible_events.append(self.event_aging)
+
+            if random.random() < 0.01:
+                possible_events.append(self.event_rocket)
 
             if possible_events:
                 chosen_event = random.choice(possible_events)
@@ -134,6 +143,46 @@ class CockExtension(ModuleExtension):
             await session.commit()
 
         return "Вы получили резиновый член на 4 хода! Каждый ход, он, случайным образом будет менять свою длину!"
+
+    async def event_teleport(self, chat_id, user_id, current_length):
+        participants = await self.get_all_participants(chat_id)
+        if len(participants) < 2:
+            return None
+
+        other_user_id, other_user_length = random.choice([p for p in participants if p[0] != user_id])
+
+        async with self.db.session_maker() as session:
+            user_cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+            )
+            other_cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == other_user_id)
+            )
+
+            user_cock_state.cock_size, other_cock_state.cock_size = other_cock_state.cock_size, user_cock_state.cock_size
+
+            session.add(user_cock_state)
+            session.add(other_cock_state)
+            await session.commit()
+
+        return f"Операция по пересадке члена с {other_user_id.first_name} прошла успешно! Теперь длина вашего члена составляет {other_user_length} см!"
+
+    async def event_aging(self, chat_id, user_id, current_length):
+        new_length = current_length * 0.8
+        await self.set_cock_length(chat_id, user_id, new_length - current_length)
+        return f"Ваш член постарел и уменьшился на 20%! Теперь его длина составляет {new_length} см."
+
+    async def event_rocket(self, chat_id, user_id, current_length):
+        async with self.db.session_maker() as session:
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+            )
+            cock_state.active_event = "rocket"
+            cock_state.event_duration = random.randint(2, 5)
+            session.add(cock_state)
+            await session.commit()
+
+        return f"Ваш член взлетел как ракета и увеличился на 20 см!"
 
     @command("cockjoin")
     async def join_cmd(self, bot: Client, message: Message):
@@ -187,12 +236,20 @@ class CockExtension(ModuleExtension):
                 if cock_state.active_event == "rubber" and cock_state.event_duration > 0:
                     change = random.randint(1, 60)
                     await self.set_cock_length(chat_id, user_id, change)
-                    result_message = f"{user.first_name}, ваш резиновый член изменился в длине и теперь составляет {change} см! Осталось {cock_state.event_duration - 1} ходов."
+                    result_message = f"Ваш резиновый член изменился в длине и теперь составляет {change} см! Осталось {cock_state.event_duration - 1} ходов."
+                elif cock_state.active_event == "rocket" and cock_state.event_duration > 0:
+                    if random.random() < 0.5:
+                        result_message = "Ваш член все еще летит как ракета!"
+                    else:
+                        cock_state.event_duration = 0
+                        change = int(current_length) / 4
+                        await self.set_cock_length(chat_id, user_id, change)
+                        result_message = f"Ваш член израсходовал топливо и упал! Теперь его длина составляет {await self.get_cock_length(chat_id, user_id)} см."
                 else:
                     change = self.calculate_change(current_length)
                     await self.set_cock_length(chat_id, user_id, change)
                     new_length = await self.get_cock_length(chat_id, user_id)
-                    result_message = f"{user.first_name}, теперь ваш член длиной {new_length} см (изменение: {change} см)."
+                    result_message = f"Теперь ваш член длиной {new_length} см (изменение: {change} см)."
 
                 await message.reply(result_message)
 
