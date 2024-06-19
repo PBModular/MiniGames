@@ -1,0 +1,34 @@
+cock:
+  event:
+    micro: Oh no, your cock has shrunk to microscopic size (0.1cm)!
+    rubber: 
+      message: You have been given a rubber cock for 4 rounds! Each move, it will randomly change its length!
+      change: Your rubber cock has changed in length and is now {change} cm! There are {remain} moves left.
+    teleport: The cock transplant operation with {fetch_user} was a success! Your penis is now {other_user_length} cm long!
+    aging: Your cock has crumpled and shrunk by 20%! It is now {new_length} cm long.
+    rocket: 
+      message: Your cock took off like a rocket and increased by 20 cm!
+      no_change: Your cock is still flying like a rocket! It is now {change} cm long.
+      change: Your cock has used up its fuel and fallen off! It is now {change} cm long.
+  join:
+    already: You already have a cock!
+    ok: You've joined the game! You have grown a basic penis 5 cm long!
+  leave:
+    ok: Your cock has been deleted, you have left the game!
+    not_participant: You don't have a cock to delete!
+  stat:
+    no_participants: No one has a cock yet!
+    list_header: |
+      <b>A list of players and the length of their cocks:</b>
+
+    list: |
+      {place}. {profile_link}: {cock_length} cm
+      
+    average: |
+      
+      Average cock length in chat: {average} cm
+  not_participant: You don't have a cock! Use the /cockjoin command to grow a basic 5 cm long penis.
+  cooldown: |
+    The command can only be used once every 24 hours. Still waiting: {hours}h. {minutes}m.
+  change: |
+    Your cock is now {new_length} cm long (change: {change} cm).

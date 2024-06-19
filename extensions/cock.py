@@ -131,7 +131,7 @@ class CockExtension(ModuleExtension):
 
     async def event_micro(self, chat_id, user_id, current_length):
         await self.set_cock_length(chat_id, user_id, -current_length + 0.1)
-        return "О нет, ваш член уменьшился до микроскопических размеров (0.1 см)!"
+        return self.S["cock"]["event"]["micro"]
 
     async def event_rubber(self, chat_id, user_id, current_length):
         async with self.db.session_maker() as session:
@@ -143,7 +143,7 @@ class CockExtension(ModuleExtension):
             session.add(cock_state)
             await session.commit()
 
-        return "Вы получили резиновый член на 4 хода! Каждый ход, он, случайным образом будет менять свою длину!"
+        return self.S["cock"]["event"]["rubber"]["message"]
 
     async def event_teleport(bot: Client, self, chat_id, user_id, current_length):
         participants = await self.get_all_participants(chat_id)
@@ -151,6 +151,7 @@ class CockExtension(ModuleExtension):
             return None
 
         other_user_id, other_user_length = random.choice([p for p in participants if p[0] != user_id])
+        fetch_user = fetch_user(bot, user_id, with_link=True)
 
         async with self.db.session_maker() as session:
             user_cock_state = await session.scalar(
@@ -166,12 +167,12 @@ class CockExtension(ModuleExtension):
             session.add(other_cock_state)
             await session.commit()
 
-        return f"Операция по пересадке члена с {fetch_user(bot, user_id, with_link=True)} прошла успешно! Теперь длина вашего члена составляет {other_user_length} см!"
+        return self.S["cock"]["event"]["teleport"].format(fetch_user=fetch_user, other_user_length=other_user_length)
 
     async def event_aging(self, chat_id, user_id, current_length):
         new_length = round(current_length * 0.8, 1)
         await self.set_cock_length(chat_id, user_id, new_length - current_length)
-        return f"Ваш член постарел и уменьшился на 20%! Теперь его длина составляет {new_length} см."
+        return self.S["cock"]["event"]["aging"].format(new_length=new_length)
 
     async def event_rocket(self, chat_id, user_id, current_length):
         async with self.db.session_maker() as session:
@@ -183,7 +184,7 @@ class CockExtension(ModuleExtension):
             session.add(cock_state)
             await session.commit()
 
-        return f"Ваш член взлетел как ракета и увеличился на 20 см!"
+        return self.S["cock"]["event"]["rocket"]["message"]
 
     @command("cockjoin")
     async def join_cmd(self, bot: Client, message: Message):
@@ -192,10 +193,10 @@ class CockExtension(ModuleExtension):
         participants = await self.get_participants(chat_id)
 
         if user_id in participants:
-            await message.reply("Вы уже присоединились к игре!")
+            await message.reply(self.S["cock"]["join"]["already"])
         else:
             await self.set_participation(chat_id, user_id, True)
-            await message.reply("Вы присоединились к игре!")
+            await message.reply(self.S["cock"]["join"]["ok"])
 
     @command("cockleave")
     async def leave_cmd(self, bot: Client, message: Message):
@@ -209,9 +210,9 @@ class CockExtension(ModuleExtension):
                     delete(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
                 )
                 await session.commit()
-            await message.reply("Ваш член был удалён, вы покинули игру!")
+            await message.reply(self.S["cock"]["leave"]["ok"])
         else:
-            await message.reply("Вы не состоите в игре!")
+            await message.reply(self.S["cock"]["leave"]["not_participant"])
 
     @command("cock")
     async def cock_cmd(self, bot: Client, message: Message):
@@ -220,7 +221,7 @@ class CockExtension(ModuleExtension):
         participants = await self.get_participants(chat_id)
 
         if user_id not in participants:
-            await message.reply("Вы не участвуете в игре.")
+            await message.reply(self.S["cock"]["not_participant"])
             return
 
         async with self.db.session_maker() as session:
@@ -233,7 +234,7 @@ class CockExtension(ModuleExtension):
                 time_remaining = timedelta(hours=24) - (now - cock_state.cooldown)
                 hours, remainder = divmod(time_remaining.seconds, 3600)
                 minutes, _ = divmod(remainder, 60)
-                await message.reply(f"Команду можно использовать только раз в 24 часа. Осталось ждать: {hours}ч. {minutes}м.")
+                await message.reply(self.S["cock"]["cooldown"].format(hours=hours, minutes=minutes))
                 return
 
             current_length = await self.get_cock_length(chat_id, user_id)
@@ -245,20 +246,23 @@ class CockExtension(ModuleExtension):
                 if cock_state.active_event == "rubber" and cock_state.event_duration > 0:
                     change = random.randint(1, 60)
                     await self.set_cock_length(chat_id, user_id, change)
-                    result_message = f"Ваш резиновый член изменился в длине и теперь составляет {change} см! Осталось {cock_state.event_duration - 1} ходов."
+                    return self.S["cock"]["event"]["rubber"]["change"].format(change=change, remain=(cock_state.event_duration - 1))
                 elif cock_state.active_event == "rocket" and cock_state.event_duration > 0:
                     if random.random() < 0.5:
-                        result_message = "Ваш член все еще летит как ракета!"
+                        cock_state.event_duration =- 1
+                        change = int(current_length) + 20
+                        await self.set_cock_length(chat_id, user_id, change)
+                        result_message = self.S["cock"]["event"]["rocket"]["no_change"].format(change=change)
                     else:
                         cock_state.event_duration = 0
                         change = int(current_length) / 4
                         await self.set_cock_length(chat_id, user_id, change)
-                        result_message = f"Ваш член израсходовал топливо и упал! Теперь его длина составляет {await self.get_cock_length(chat_id, user_id)} см."
+                        result_message = self.S["cock"]["event"]["rocket"]["change"].format(change=change)
                 else:
                     change = self.calculate_change(current_length)
                     await self.set_cock_length(chat_id, user_id, change)
                     new_length = await self.get_cock_length(chat_id, user_id)
-                    result_message = f"Теперь ваш член длиной {new_length} см (изменение: {change} см)."
+                    result_message = self.S["cock"]["change"].format(new_length=new_length, change=change)
 
                 cock_state.cooldown = now
                 session.add(cock_state)
@@ -273,17 +277,17 @@ class CockExtension(ModuleExtension):
         average_length = await self.get_average_length(chat_id)
 
         if not participants:
-            await message.reply("В игре пока нет участников.")
+            await message.reply(self.S["cock"]["stat"]["no_participants"])
             return
 
         sorted_participants = sorted(participants, key=lambda x: x[1], reverse=True)
 
-        stats_message = "Список участников и длина их членов:\n"
+        stats_message = self.S["cock"]["stat"]["list_header"]
         for place, (user_id, cock_length) in enumerate(sorted_participants, start=1):
             profile_link = await fetch_user(bot, user_id, with_link=False)
-            stats_message += f"{place}. {profile_link}: {cock_length} см\n"
+            stats_message += self.S["cock"]["stat"]["list"].format(place=place, profile_link=profile_link, cock_length=cock_length)
 
-        stats_message += f"\nСредняя длина члена: {average_length:.2f} см"
+        stats_message += self.S["cock"]["stat"]["average"].format(average=round(average_length, 2))
 
         await message.reply(stats_message)
     
