@@ -10,6 +10,7 @@ cock:
       message: Your cock took off like a rocket and increased by 20 cm!
       no_change: Your cock is still flying like a rocket! It is now {change} cm long.
       change: Your cock has used up its fuel and fallen off! It is now {change} cm long.
+    magnetic: Your cock has become a big magnet! You have dragged {change} cm from {target_user}!
   join:
     already: You already have a cock!
     ok: You've joined the game! You have grown a basic penis 5 cm long!

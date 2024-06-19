@@ -122,10 +122,14 @@ class CockExtension(ModuleExtension):
             if random.random() < 0.01:
                 possible_events.append(self.event_rocket)
 
+            if random.random() < 0.03:
+                possible_events.append(self.event_magnetic)
+
             if possible_events:
                 chosen_event = random.choice(possible_events)
                 special_event_message = await chosen_event(chat_id, user_id, current_length)
-                return special_event_message
+                if special_event_message:
+                    return special_event_message
         
             return None
 
@@ -185,6 +189,36 @@ class CockExtension(ModuleExtension):
             await session.commit()
 
         return self.S["cock"]["event"]["rocket"]["message"]
+
+    async def event_magnetic(bot: Client, self, chat_id, user_id):
+        participants = await self.get_all_participants(chat_id)
+        if len(participants) < 2:
+            return None
+
+        possible_targets = [p for p in participants if p[0] != user_id and p[1] > 3]
+        if not possible_targets:
+            return None
+
+        target_user_id, target_length = random.choice(possible_targets)
+        change = max(1, (target_length / 2))
+
+        async with self.db.session_maker() as session:
+            user_cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+            )
+            target_cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == target_user_id)
+            )
+
+            user_cock_state.cock_size += change
+            target_cock_state.cock_size -= change
+
+            session.add(user_cock_state)
+            session.add(target_cock_state)
+            await session.commit()
+
+        target_user = fetch_user(bot, target_user_id, with_link=True)
+        return self.S["cock"]["event"]["magnetic"].format(target_user=target_user, change=change)
 
     @command("cockjoin")
     async def join_cmd(self, bot: Client, message: Message):
