@@ -3,6 +3,7 @@ from pyrogram.types import Message
 from base.module import BaseModule, command
 from base.mod_ext import ModuleExtension
 from ..db import Base, CockState
+from ..utils import fetch_user
 from sqlalchemy import select, delete, func
 import random
 
@@ -20,6 +21,8 @@ class CockExtension(ModuleExtension):
             
             if cock_state is None:
                 cock_state = CockState(chat_id=chat_id, user_id=user_id, is_participating=is_participating)
+                if cock_state.cock_size is None:
+                    cock_state.cock_size = 5
                 session.add(cock_state)
             else:
                 cock_state.is_participating = is_participating
@@ -39,9 +42,6 @@ class CockExtension(ModuleExtension):
             cock_state = await session.scalar(
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
-            if cock_state.cock_size is None:
-                cock_state.cock_size = 5
-
             if cock_state.active_event == "rubber":
                 cock_state.cock_size = change
             else:
@@ -112,7 +112,7 @@ class CockExtension(ModuleExtension):
             if random.random() < 0.02:
                 possible_events.append(self.event_rubber)
 
-            if random.random() < 0.01:
+            if random.random() < 0.02:
                 possible_events.append(self.event_teleport)
 
             if random.random() < 0.04:
@@ -144,7 +144,7 @@ class CockExtension(ModuleExtension):
 
         return "Вы получили резиновый член на 4 хода! Каждый ход, он, случайным образом будет менять свою длину!"
 
-    async def event_teleport(self, chat_id, user_id, current_length):
+    async def event_teleport(bot: Client, self, chat_id, user_id, current_length):
         participants = await self.get_all_participants(chat_id)
         if len(participants) < 2:
             return None
@@ -165,10 +165,10 @@ class CockExtension(ModuleExtension):
             session.add(other_cock_state)
             await session.commit()
 
-        return f"Операция по пересадке члена с {other_user_id.first_name} прошла успешно! Теперь длина вашего члена составляет {other_user_length} см!"
+        return f"Операция по пересадке члена с {fetch_user(bot, user_id, with_link=True)} прошла успешно! Теперь длина вашего члена составляет {other_user_length} см!"
 
     async def event_aging(self, chat_id, user_id, current_length):
-        new_length = current_length * 0.8
+        new_length = round(current_length * 0.8, 1)
         await self.set_cock_length(chat_id, user_id, new_length - current_length)
         return f"Ваш член постарел и уменьшился на 20%! Теперь его длина составляет {new_length} см."
 
@@ -216,7 +216,6 @@ class CockExtension(ModuleExtension):
     async def cock_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
         user_id = message.from_user.id
-        user = await bot.get_users(user_id)
         participants = await self.get_participants(chat_id)
 
         if user_id not in participants:
@@ -263,10 +262,12 @@ class CockExtension(ModuleExtension):
             await message.reply("В игре пока нет участников.")
             return
 
+        sorted_participants = sorted(participants, key=lambda x: x[1], reverse=True)
+
         stats_message = "Список участников и длина их членов:\n"
-        for user_id, cock_length in participants:
-            user = await bot.get_users(user_id)
-            stats_message += f"{user.first_name}: {cock_length} см\n"
+        for place, (user_id, cock_length) in enumerate(sorted_participants, start=1):
+            profile_link = await fetch_user(bot, user_id, with_link=False)
+            stats_message += f"{place}. {profile_link}: {cock_length} см\n"
 
         stats_message += f"\nСредняя длина члена: {average_length:.2f} см"
 
