@@ -97,7 +97,7 @@ class CockExtension(ModuleExtension):
 
         return change
 
-    async def check_special_events(self, chat_id, user_id, current_length):
+    async def check_special_events(self, bot, chat_id, user_id, current_length):
         async with self.db.session_maker() as session:
             cock_state = await session.scalar(
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
@@ -127,17 +127,17 @@ class CockExtension(ModuleExtension):
 
             if possible_events:
                 chosen_event = random.choice(possible_events)
-                special_event_message = await chosen_event(chat_id, user_id, current_length)
+                special_event_message = await chosen_event(bot, chat_id, user_id, current_length)
                 if special_event_message:
                     return special_event_message
         
             return None
 
-    async def event_micro(self, chat_id, user_id, current_length):
+    async def event_micro(self, bot, chat_id, user_id, current_length):
         await self.set_cock_length(chat_id, user_id, -current_length + 0.1)
         return self.S["cock"]["event"]["micro"]
 
-    async def event_rubber(self, chat_id, user_id, current_length):
+    async def event_rubber(self, bot, chat_id, user_id, current_length):
         async with self.db.session_maker() as session:
             cock_state = await session.scalar(
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
@@ -149,13 +149,13 @@ class CockExtension(ModuleExtension):
 
         return self.S["cock"]["event"]["rubber"]["message"]
 
-    async def event_teleport(bot: Client, self, chat_id, user_id, current_length):
+    async def event_teleport(self, bot, chat_id, user_id, current_length):
         participants = await self.get_all_participants(chat_id)
         if len(participants) < 2:
             return None
 
         other_user_id, other_user_length = random.choice([p for p in participants if p[0] != user_id])
-        fetch_user = fetch_user(bot, user_id, with_link=True)
+        fetch_user = await fetch_user(bot, user_id, with_link=True)
 
         async with self.db.session_maker() as session:
             user_cock_state = await session.scalar(
@@ -173,12 +173,12 @@ class CockExtension(ModuleExtension):
 
         return self.S["cock"]["event"]["teleport"].format(fetch_user=fetch_user, other_user_length=other_user_length)
 
-    async def event_aging(self, chat_id, user_id, current_length):
+    async def event_aging(self, bot, chat_id, user_id, current_length):
         new_length = round(current_length * 0.8, 1)
         await self.set_cock_length(chat_id, user_id, new_length - current_length)
         return self.S["cock"]["event"]["aging"].format(new_length=new_length)
 
-    async def event_rocket(self, chat_id, user_id, current_length):
+    async def event_rocket(self, bot, chat_id, user_id, current_length):
         async with self.db.session_maker() as session:
             cock_state = await session.scalar(
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
@@ -190,7 +190,7 @@ class CockExtension(ModuleExtension):
 
         return self.S["cock"]["event"]["rocket"]["message"]
 
-    async def event_magnetic(bot: Client, self, chat_id, user_id):
+    async def event_magnetic(self, bot, chat_id, user_id, current_length):
         participants = await self.get_all_participants(chat_id)
         if len(participants) < 2:
             return None
@@ -217,7 +217,7 @@ class CockExtension(ModuleExtension):
             session.add(target_cock_state)
             await session.commit()
 
-        target_user = fetch_user(bot, target_user_id, with_link=True)
+        target_user = await fetch_user(bot, target_user_id, with_link=True)
         return self.S["cock"]["event"]["magnetic"].format(target_user=target_user, change=change)
 
     @command("cockjoin")
@@ -272,7 +272,7 @@ class CockExtension(ModuleExtension):
                 return
 
             current_length = await self.get_cock_length(chat_id, user_id)
-            special_event_message = await self.check_special_events(chat_id, user_id, current_length)
+            special_event_message = await self.check_special_events(bot, chat_id, user_id, current_length)
 
             if special_event_message:
                 await message.reply(special_event_message)
