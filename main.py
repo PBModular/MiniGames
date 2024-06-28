@@ -5,6 +5,7 @@ from base.mod_ext import ModuleExtension
 from typing import Type
 
 from .extensions.cock import CockExtension
+from .extensions.tictactoe import TicTacToeExtension
 
 #from sqlalchemy import select
 from .db import Base
@@ -14,7 +15,8 @@ class MiniGamesModule(BaseModule):
     @property
     def module_extensions(self) -> list[Type[ModuleExtension]]:
         return [
-            CockExtension
+            CockExtension,
+            TicTacToeExtension
         ]
     
     @property
