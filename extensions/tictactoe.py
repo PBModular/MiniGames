@@ -3,6 +3,7 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, 
 from base.module import BaseModule, command, allowed_for, callback_query
 from base.mod_ext import ModuleExtension
 import random
+import asyncio
 
 class TicTacToeExtension(ModuleExtension):
     def on_init(self):
@@ -50,7 +51,9 @@ class TicTacToeExtension(ModuleExtension):
             'players': {
                 'X': players[0],
                 'O': players[1]
-            }
+            },
+            'timer': None,
+            'message': None
         }
         waiting_message = self.waiting[chat_id]["message"]
         del self.waiting[chat_id]
@@ -74,6 +77,7 @@ class TicTacToeExtension(ModuleExtension):
             await message.edit(text, reply_markup=InlineKeyboardMarkup(buttons))
         else:
             await message.reply(text, reply_markup=InlineKeyboardMarkup(buttons))
+        await self.set_timer(chat_id)
 
     @callback_query(filters.regex(r"^move:"))
     async def handle_move(self, callback_query):
@@ -96,9 +100,11 @@ class TicTacToeExtension(ModuleExtension):
         if winner:
             winner_name = (await callback_query.message.chat.get_member(game['players'][winner])).user.first_name
             await callback_query.message.reply(self.S["tictactoe"]["player_win"].format(winner_name=winner_name, winner=winner))
+            game['timer'].cancel()
             del self.games[chat_id]
         elif ' ' not in game['board']:
             await callback_query.message.reply(self.S["tictactoe"]["draw"])
+            game['timer'].cancel()
             del self.games[chat_id]
 
     @callback_query(filters.regex(r"^cancel_matchmaking:"))
@@ -118,15 +124,29 @@ class TicTacToeExtension(ModuleExtension):
     @callback_query(filters.regex(r"^cancel_game:"))
     async def cancel_game(self, callback_query):
         chat_id, user_id = map(int, callback_query.data.split(":")[1:])
-        print(user_id)
         if chat_id in self.games and user_id in self.games[chat_id]['players'].values():
             if callback_query.from_user.id == user_id:
+                game = self.games[chat_id]
+                game['timer'].cancel()
                 del self.games[chat_id]
                 await callback_query.message.edit(self.S["tictactoe"]["game_canceled"])
             else:
                 await callback_query.answer(self.S["tictactoe"]["not_your_game"], show_alert=True)
         else:
             return
+
+    async def set_timer(self, chat_id):
+        game = self.games[chat_id]
+        if game['timer']:
+            game['timer'].cancel()
+        game['timer'] = asyncio.create_task(self.end_game_on_timeout(chat_id))
+
+    async def end_game_on_timeout(self, chat_id):
+        await asyncio.sleep(60)
+        if chat_id in self.games:
+            game = self.games[chat_id]
+            await game['message'].edit(self.S["tictactoe"]["game_timeout"])
+            del self.games[chat_id]
 
     def check_winner(self, board):
         winning_positions = [
