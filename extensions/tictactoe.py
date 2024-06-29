@@ -23,7 +23,8 @@ class TicTacToeExtension(ModuleExtension):
             return
 
         join_button = InlineKeyboardMarkup([
-            [InlineKeyboardButton(self.S["tictactoe"]["join_button"], callback_data="join")]
+            [InlineKeyboardButton(self.S["tictactoe"]["join_button"], callback_data="join")],
+            [InlineKeyboardButton(self.S["tictactoe"]["cancel_button"], callback_data=f"cancel_matchmaking:{user_id}")]
         ])
         waiting_message = await message.reply(self.S["tictactoe"]["waiting"], reply_markup=join_button)
         self.waiting[chat_id] = {"user_id": user_id, "message": waiting_message}
@@ -67,6 +68,7 @@ class TicTacToeExtension(ModuleExtension):
                 InlineKeyboardButton(board[i+1], callback_data=f"move:{chat_id}:{i+1}"),
                 InlineKeyboardButton(board[i+2], callback_data=f"move:{chat_id}:{i+2}")
             ])
+        buttons.append([InlineKeyboardButton(self.S["tictactoe"]["cancel_button"], callback_data=f"cancel_game:{chat_id}:{game['players'][turn]}")])
         text = self.S["tictactoe"]["current_turn"].format(user_name=current_player.user.first_name, turn=turn)
         if edit:
             await message.edit(text, reply_markup=InlineKeyboardMarkup(buttons))
@@ -88,17 +90,43 @@ class TicTacToeExtension(ModuleExtension):
 
         game['board'][move] = game['turn']
         game['turn'] = 'O' if game['turn'] == 'X' else 'X'
-        await callback_query.message.delete()
-        await self.send_board(callback_query.message, chat_id)
+        await self.send_board(callback_query.message, chat_id, edit=True)
 
         winner = self.check_winner(game['board'])
         if winner:
-            winner_name = (await callback_query.message.chat.get_member(game['players'][winner]))
+            winner_name = (await callback_query.message.chat.get_member(game['players'][winner])).user.first_name
             await callback_query.message.reply(self.S["tictactoe"]["player_win"].format(winner_name=winner_name, winner=winner))
             del self.games[chat_id]
         elif ' ' not in game['board']:
             await callback_query.message.reply(self.S["tictactoe"]["draw"])
             del self.games[chat_id]
+
+    @callback_query(filters.regex(r"^cancel_matchmaking:"))
+    async def cancel_matchmaking(self, callback_query):
+        user_id = int(callback_query.data.split(":")[1])
+        chat_id = callback_query.message.chat.id
+        
+        if chat_id in self.waiting and self.waiting[chat_id]["user_id"] == user_id:
+            if callback_query.from_user.id == user_id:
+                del self.waiting[chat_id]
+                await callback_query.message.edit(self.S["tictactoe"]["game_canceled"])
+            else:
+                await callback_query.answer(self.S["tictactoe"]["not_your_game"], show_alert=True)
+        else:
+            return
+
+    @callback_query(filters.regex(r"^cancel_game:"))
+    async def cancel_game(self, callback_query):
+        chat_id, user_id = map(int, callback_query.data.split(":")[1:])
+        print(user_id)
+        if chat_id in self.games and user_id in self.games[chat_id]['players'].values():
+            if callback_query.from_user.id == user_id:
+                del self.games[chat_id]
+                await callback_query.message.edit(self.S["tictactoe"]["game_canceled"])
+            else:
+                await callback_query.answer(self.S["tictactoe"]["not_your_game"], show_alert=True)
+        else:
+            return
 
     def check_winner(self, board):
         winning_positions = [

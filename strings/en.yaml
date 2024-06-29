@@ -38,6 +38,7 @@ tictactoe:
   already_game: The game is already in progress!
   already_waiting: Last game isn't over yet!
   join_button: Join
+  cancel_button: Cancel
   waiting: Waiting for the second player... Click 'Join' to start the game.
   not_waiting: The game has already started or the wait has been canceled.
   your_game: You can't join your own game!
@@ -48,3 +49,5 @@ tictactoe:
   player_win: |
     Player {winner_name} ({winner}) wins!
   draw: Draw!
+  game_canceled: The game is cancelled!
+  not_your_game: It's not your game to cancel!

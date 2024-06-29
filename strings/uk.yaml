@@ -38,6 +38,7 @@ tictactoe:
   already_game: Гра вже в процесі!
   already_waiting: Остання гра ще не закінчилася!
   join_button: Приєднатися
+  cancel_button: Скасувати
   waiting: Чекаємо на другого гравця... Натисніть "Приєднатися", щоб почати гру.
   not_waiting: Гра вже почалася або очікування скасовано.
   your_game: Ви не можете приєднатися до власної гри!
@@ -48,3 +49,5 @@ tictactoe:
   player_win: |
     Гравець {winner_name} ({winner}) виграв!
   draw: Нічия!
+  game_canceled: Гру скасовано!
+  not_your_game: Це не ваша гра, щоб її скасовувати!
