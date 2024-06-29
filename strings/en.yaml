@@ -33,3 +33,18 @@ cock:
     The command can only be used once every 24 hours. Still waiting: {hours}h. {minutes}m.
   change: |
     Your cock is now {new_length} cm long (change: {change} cm).
+
+tictactoe:
+  already_game: The game is already in progress!
+  already_waiting: Last game isn't over yet!
+  join_button: Join
+  waiting: Waiting for the second player... Click 'Join' to start the game.
+  not_waiting: The game has already started or the wait has been canceled.
+  your_game: You can't join your own game!
+  not_your_turn: It's not your turn!
+  invalid_move: Wrong move!
+  current_turn: |
+    <b>Current turn:</b> {user_name} ({turn})
+  player_win: |
+    Player {winner_name} ({winner}) wins!
+  draw: Draw!
