@@ -71,7 +71,7 @@ class TicTacToeExtension(ModuleExtension):
                 InlineKeyboardButton(board[i+1], callback_data=f"move:{chat_id}:{i+1}"),
                 InlineKeyboardButton(board[i+2], callback_data=f"move:{chat_id}:{i+2}")
             ])
-        buttons.append([InlineKeyboardButton(self.S["tictactoe"]["cancel_button"], callback_data=f"cancel_game:{chat_id}:{game['players'][turn]}")])
+        buttons.append([InlineKeyboardButton(self.S["tictactoe"]["cancel_button"], callback_data=f"cancel_game:{chat_id}")])
         text = self.S["tictactoe"]["current_turn"].format(user_name=current_player.user.first_name, turn=turn)
         if edit:
             await message.edit(text, reply_markup=InlineKeyboardMarkup(buttons))
@@ -123,10 +123,10 @@ class TicTacToeExtension(ModuleExtension):
 
     @callback_query(filters.regex(r"^cancel_game:"))
     async def cancel_game(self, callback_query):
-        chat_id, user_id = map(int, callback_query.data.split(":")[1:])
-        if chat_id in self.games and user_id in self.games[chat_id]['players'].values():
-            if callback_query.from_user.id == user_id:
-                game = self.games[chat_id]
+        chat_id = int(callback_query.data.split(":")[1])
+        if chat_id in self.games:
+            game = self.games[chat_id]
+            if callback_query.from_user.id in game['players'].values():
                 game['timer'].cancel()
                 del self.games[chat_id]
                 await callback_query.message.edit(self.S["tictactoe"]["game_canceled"])
