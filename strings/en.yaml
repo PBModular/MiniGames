@@ -52,3 +52,4 @@ tictactoe:
   game_canceled: The game is cancelled!
   not_your_game: It's not your game to cancel!
   game_timeout: The game is terminated due to no move within 60 seconds.
+  not_active_game: It's not an active game!

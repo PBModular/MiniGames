@@ -43,6 +43,9 @@ class TicTacToeExtension(ModuleExtension):
             await callback_query.answer(self.S["tictactoe"]["your_game"], show_alert=True)
             return
 
+        if chat_id in self.games:
+            del self.games[chat_id]
+
         players = [self.waiting[chat_id]["user_id"], user_id]
         random.shuffle(players)
         self.games[chat_id] = {
@@ -67,23 +70,37 @@ class TicTacToeExtension(ModuleExtension):
         buttons = []
         for i in range(0, 9, 3):
             buttons.append([
-                InlineKeyboardButton(board[i], callback_data=f"move:{chat_id}:{i}"),
-                InlineKeyboardButton(board[i+1], callback_data=f"move:{chat_id}:{i+1}"),
-                InlineKeyboardButton(board[i+2], callback_data=f"move:{chat_id}:{i+2}")
+                InlineKeyboardButton(board[i], callback_data=f"move:{chat_id}:{i}:{message.id}"),
+                InlineKeyboardButton(board[i+1], callback_data=f"move:{chat_id}:{i+1}:{message.id}"),
+                InlineKeyboardButton(board[i+2], callback_data=f"move:{chat_id}:{i+2}:{message.id}")
             ])
         buttons.append([InlineKeyboardButton(self.S["tictactoe"]["cancel_button"], callback_data=f"cancel_game:{chat_id}")])
         text = self.S["tictactoe"]["current_turn"].format(user_name=current_player.user.first_name, turn=turn)
         if edit:
-            await message.edit(text, reply_markup=InlineKeyboardMarkup(buttons))
+            game['message'] = await message.edit(text, reply_markup=InlineKeyboardMarkup(buttons))
         else:
-            await message.reply(text, reply_markup=InlineKeyboardMarkup(buttons))
+            game['message'] = await message.reply(text, reply_markup=InlineKeyboardMarkup(buttons))
         await self.set_timer(chat_id)
 
     @callback_query(filters.regex(r"^move:"))
     async def handle_move(self, callback_query):
-        chat_id, move = map(int, callback_query.data.split(":")[1:])
+        try:
+            chat_id, move, message_id = map(int, callback_query.data.split(":")[1:])
+        except ValueError:
+            await callback_query.answer(self.S["tictactoe"]["not_active_game"], show_alert=True)
+            return
+        
+        if chat_id not in self.games:
+            await callback_query.answer(self.S["tictactoe"]["not_active_game"], show_alert=True)
+            return
+
         game = self.games[chat_id]
         user_id = callback_query.from_user.id
+        
+        if message_id != game['message'].id:
+            await callback_query.answer(self.S["tictactoe"]["not_active_game"], show_alert=True)
+            return
+        
         if user_id != game['players'][game['turn']]:
             await callback_query.answer(self.S["tictactoe"]["not_your_turn"], show_alert=True)
             return
@@ -124,16 +141,19 @@ class TicTacToeExtension(ModuleExtension):
     @callback_query(filters.regex(r"^cancel_game:"))
     async def cancel_game(self, callback_query):
         chat_id = int(callback_query.data.split(":")[1])
-        if chat_id in self.games:
-            game = self.games[chat_id]
-            if callback_query.from_user.id in game['players'].values():
-                game['timer'].cancel()
-                del self.games[chat_id]
-                await callback_query.message.edit(self.S["tictactoe"]["game_canceled"])
-            else:
-                await callback_query.answer(self.S["tictactoe"]["not_your_game"], show_alert=True)
-        else:
+        
+        if chat_id not in self.games:
+            await callback_query.answer(self.S["tictactoe"]["not_active_game"], show_alert=True)
             return
+        
+        game = self.games[chat_id]
+
+        if callback_query.from_user.id in game['players'].values():
+            game['timer'].cancel()
+            del self.games[chat_id]
+            await callback_query.message.edit(self.S["tictactoe"]["game_canceled"])
+        else:
+            await callback_query.answer(self.S["tictactoe"]["not_your_game"], show_alert=True)
 
     async def set_timer(self, chat_id):
         game = self.games[chat_id]
