@@ -283,7 +283,7 @@ class CockExtension(ModuleExtension):
                     return self.S["cock"]["event"]["rubber"]["change"].format(change=change, remain=(cock_state.event_duration - 1))
                 elif cock_state.active_event == "rocket" and cock_state.event_duration > 0:
                     if random.random() < 0.5:
-                        cock_state.event_duration =- 1
+                        cock_state.event_duration -= 1
                         change = int(current_length) + 20
                         await self.set_cock_length(chat_id, user_id, change)
                         result_message = self.S["cock"]["event"]["rocket"]["no_change"].format(change=change)
