@@ -42,7 +42,7 @@ class CockExtension(ModuleExtension):
     async def set_cock_length(self, chat_id, user_id, change):
         async with self.db.session_maker() as session:
             cock_state = await session.scalar(
-                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id).with_for_update()
             )
             if cock_state.active_event == "rubber":
                 cock_state.cock_size = change
