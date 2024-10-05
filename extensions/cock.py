@@ -105,33 +105,36 @@ class CockExtension(ModuleExtension):
             if cock_state.active_event:
                 return None
 
-            possible_events = []
+            events = []
 
-            if current_length > 35 and random.random() < 0.03:
-                possible_events.append(self.event_micro)
+            if current_length > 35:
+                events.append((self.event_micro, 0.03))
 
-            if random.random() < 0.02:
-                possible_events.append(self.event_rubber)
+            events.append((self.event_rubber, 0.02))
+            events.append((self.event_teleport, 0.02))
+            events.append((self.event_aging, 0.04))
+            events.append((self.event_rocket, 0.01))
+            events.append((self.event_magnetic, 0.03))
 
-            if random.random() < 0.02:
-                possible_events.append(self.event_teleport)
+            eligible_events = [(event, weight) for event, weight in events if random.random() < weight]
 
-            if random.random() < 0.04:
-                possible_events.append(self.event_aging)
+            if eligible_events:
+                total_weight = sum(weight for _, weight in eligible_events)
+                rand_choice = random.uniform(0, total_weight)
+                cumulative_weight = 0
 
-            if random.random() < 0.01:
-                possible_events.append(self.event_rocket)
+                for event, weight in eligible_events:
+                    cumulative_weight += weight
+                    if rand_choice <= cumulative_weight:
+                        chosen_event = event
+                        break
 
-            if random.random() < 0.03:
-                possible_events.append(self.event_magnetic)
-
-            if possible_events:
-                chosen_event = random.choice(possible_events)
                 special_event_message = await chosen_event(bot, chat_id, user_id, current_length)
                 if special_event_message:
                     return special_event_message
-        
+
             return None
+
 
     async def event_micro(self, bot, chat_id, user_id, current_length):
         await self.set_cock_length(chat_id, user_id, -current_length + 0.1)
