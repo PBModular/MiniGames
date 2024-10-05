@@ -4,6 +4,7 @@ from base.module import BaseModule, command
 from base.mod_ext import ModuleExtension
 from ..db import Base, CockState
 from ..utils import fetch_user
+from ..config import CockConfig
 from sqlalchemy import select, delete, func
 from datetime import datetime, timedelta
 import random
@@ -23,7 +24,7 @@ class CockExtension(ModuleExtension):
             if cock_state is None:
                 cock_state = CockState(chat_id=chat_id, user_id=user_id, is_participating=is_participating)
                 if cock_state.cock_size is None:
-                    cock_state.cock_size = 5
+                    cock_state.cock_size = CockConfig.DEFAULT_COCK_SIZE
                 session.add(cock_state)
             else:
                 cock_state.is_participating = is_participating
@@ -108,13 +109,13 @@ class CockExtension(ModuleExtension):
             events = []
 
             if current_length > 35:
-                events.append((self.event_micro, 0.03))
+                events.append((self.event_micro, CockConfig.PROB_MICRO))
 
-            events.append((self.event_rubber, 0.02))
-            events.append((self.event_teleport, 0.02))
-            events.append((self.event_aging, 0.04))
-            events.append((self.event_rocket, 0.01))
-            events.append((self.event_magnetic, 0.03))
+            events.append((self.event_rubber, CockConfig.PROB_RUBBER))
+            events.append((self.event_teleport, CockConfig.PROB_TELEPORT))
+            events.append((self.event_aging, CockConfig.PROB_AGING))
+            events.append((self.event_rocket, CockConfig.PROB_ROCKET))
+            events.append((self.event_magnetic, CockConfig.PROB_MAGNETIC))
 
             eligible_events = [(event, weight) for event, weight in events if random.random() < weight]
 
@@ -134,7 +135,6 @@ class CockExtension(ModuleExtension):
                     return special_event_message
 
             return None
-
 
     async def event_micro(self, bot, chat_id, user_id, current_length):
         await self.set_cock_length(chat_id, user_id, -current_length + 0.1)
