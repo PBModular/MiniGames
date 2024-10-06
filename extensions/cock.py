@@ -108,18 +108,18 @@ class CockExtension(ModuleExtension):
 
             events = []
 
-            if current_length > 35:
-                events.append((self.event_micro, CockConfig.PROB_MICRO))
-
-            events.append((self.event_rubber, CockConfig.PROB_RUBBER))
-            events.append((self.event_teleport, CockConfig.PROB_TELEPORT))
-            events.append((self.event_aging, CockConfig.PROB_AGING))
-            events.append((self.event_rocket, CockConfig.PROB_ROCKET))
-            events.append((self.event_magnetic, CockConfig.PROB_MAGNETIC))
-            events.append((self.event_shrink_ray, CockConfig.PROB_SHRINK_RAY))
-            events.append((self.event_growth_spurt, CockConfig.PROB_GROWTH_SPURT))
-            events.append((self.event_phantom_shrink, CockConfig.PROB_PHANTOM_SHRINK))
-            events.append((self.event_black_hole, CockConfig.PROB_BLACK_HOLE))
+            events.extend([
+                (self.event_micro, CockConfig.PROB_MICRO) if current_length > 35 else [],
+                (self.event_rubber, CockConfig.PROB_RUBBER),
+                (self.event_teleport, CockConfig.PROB_TELEPORT),
+                (self.event_aging, CockConfig.PROB_AGING),
+                (self.event_rocket, CockConfig.PROB_ROCKET),
+                (self.event_magnetic, CockConfig.PROB_MAGNETIC),
+                (self.event_shrink_ray, CockConfig.PROB_SHRINK_RAY),
+                (self.event_growth_spurt, CockConfig.PROB_GROWTH_SPURT),
+                (self.event_phantom_shrink, CockConfig.PROB_PHANTOM_SHRINK),
+                (self.event_black_hole, CockConfig.PROB_BLACK_HOLE)
+            ])
 
             eligible_events = [(event, weight) for event, weight in events if random.random() < weight]
 
