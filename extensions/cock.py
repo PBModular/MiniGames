@@ -109,7 +109,7 @@ class CockExtension(ModuleExtension):
             events = []
 
             events.extend([
-                (self.event_micro, CockConfig.PROB_MICRO) if current_length > (CockConfig.MAX_COCK_SIZE * 0.7) else [],
+                (self.event_micro, CockConfig.PROB_MICRO) if current_length > (CockConfig.MAX_COCK_SIZE * 0.7) else None,
                 (self.event_rubber, CockConfig.PROB_RUBBER),
                 (self.event_teleport, CockConfig.PROB_TELEPORT),
                 (self.event_aging, CockConfig.PROB_AGING),
@@ -120,6 +120,8 @@ class CockExtension(ModuleExtension):
                 (self.event_phantom_shrink, CockConfig.PROB_PHANTOM_SHRINK),
                 (self.event_black_hole, CockConfig.PROB_BLACK_HOLE)
             ])
+
+            events = list(filter(None, events))
 
             eligible_events = [(event, weight) for event, weight in events if random.random() < weight]
 
