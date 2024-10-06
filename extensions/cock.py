@@ -330,11 +330,11 @@ class CockExtension(ModuleExtension):
                     new_length = await self.get_cock_length(chat_id, user_id)
                     result_message = self.S["cock"]["change"].format(new_length=new_length, change=change)
 
-                cock_state.cooldown = now
-                session.add(cock_state)
-                await session.commit()
-
                 await message.reply(result_message)
+
+            cock_state.cooldown = now
+            session.add(cock_state)
+            await session.commit()
 
     @command("cockstat")
     async def cockstat_cmd(self, bot: Client, message: Message):
