@@ -65,7 +65,7 @@ class CockExtension(ModuleExtension):
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
             if cock_state.cock_size is None:
-                cock_state.cock_size = 5
+                cock_state.cock_size = CockConfig.DEFAULT_COCK_SIZE
                 session.add(cock_state)
                 await session.commit()
             return cock_state.cock_size
@@ -87,11 +87,11 @@ class CockExtension(ModuleExtension):
             return avg_length if avg_length is not None else 0
 
     def calculate_change(self, current_length):
-        increase_probability = max(0.35, 0.95 - (current_length / 60) * 0.60)
+        increase_probability = max(0.35, 0.95 - (current_length / CockConfig.MAX_COCK_SIZE) * 0.60)
         rand_num = random.random()
 
         if (rand_num <= increase_probability):
-            change = random.randint(1, min(5, 60 - int(current_length)))
+            change = random.randint(1, min(CockConfig.DEFAULT_COCK_SIZE, CockConfig.MAX_COCK_SIZE - current_length))
         else:
             max_decrease = max(1, (current_length * 0.25))
             change = -random.randint(1, int(max_decrease))
@@ -109,7 +109,7 @@ class CockExtension(ModuleExtension):
             events = []
 
             events.extend([
-                (self.event_micro, CockConfig.PROB_MICRO) if current_length > 35 else [],
+                (self.event_micro, CockConfig.PROB_MICRO) if current_length > (CockConfig.MAX_COCK_SIZE * 0.7) else [],
                 (self.event_rubber, CockConfig.PROB_RUBBER),
                 (self.event_teleport, CockConfig.PROB_TELEPORT),
                 (self.event_aging, CockConfig.PROB_AGING),
@@ -150,7 +150,7 @@ class CockExtension(ModuleExtension):
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
             cock_state.active_event = "rubber"
-            cock_state.event_duration = 4
+            cock_state.event_duration = CockConfig.EVENT_RUBBER_DURATION
             session.add(cock_state)
             await session.commit()
 
@@ -191,7 +191,7 @@ class CockExtension(ModuleExtension):
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id)
             )
             cock_state.active_event = "rocket"
-            cock_state.event_duration = random.randint(2, 5)
+            cock_state.event_duration = random.randint(CockConfig.EVENT_ROCKET_MIN_DURATION, CockConfig.EVENT_ROCKET_MAX_DURATION)
             session.add(cock_state)
             await session.commit()
 
@@ -294,8 +294,8 @@ class CockExtension(ModuleExtension):
             )
 
             now = datetime.utcnow()
-            if cock_state.cooldown and now - cock_state.cooldown < timedelta(hours=24):
-                time_remaining = timedelta(hours=24) - (now - cock_state.cooldown)
+            if cock_state.cooldown and now - cock_state.cooldown < timedelta(hours=CockConfig.COOLDOWN_HOURS):
+                time_remaining = timedelta(hours=CockConfig.COOLDOWN_HOURS) - (now - cock_state.cooldown)
                 hours, remainder = divmod(time_remaining.seconds, 3600)
                 minutes, _ = divmod(remainder, 60)
                 await message.reply(self.S["cock"]["cooldown"].format(hours=hours, minutes=minutes))
@@ -308,18 +308,18 @@ class CockExtension(ModuleExtension):
                 await message.reply(special_event_message)
             else:
                 if cock_state.active_event == "rubber" and cock_state.event_duration > 0:
-                    change = random.randint(1, 60)
+                    change = random.randint(CockConfig.MIN_COCK_SIZE, CockConfig.MAX_COCK_SIZE)
                     await self.set_cock_length(chat_id, user_id, change)
                     return self.S["cock"]["event"]["rubber"]["change"].format(change=change, remain=(cock_state.event_duration - 1))
                 elif cock_state.active_event == "rocket" and cock_state.event_duration > 0:
                     if random.random() < 0.5:
                         cock_state.event_duration -= 1
-                        change = int(current_length) + 20
+                        change = current_length + random.randint(10, 20)
                         await self.set_cock_length(chat_id, user_id, change)
                         result_message = self.S["cock"]["event"]["rocket"]["no_change"].format(change=change)
                     else:
                         cock_state.event_duration = 0
-                        change = int(current_length) / 4
+                        change = current_length / 4
                         await self.set_cock_length(chat_id, user_id, change)
                         result_message = self.S["cock"]["event"]["rocket"]["change"].format(change=change)
                 else:
