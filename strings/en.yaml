@@ -11,6 +11,10 @@ cock:
       no_change: Your cock is still flying like a rocket! It is now {change} cm long.
       change: Your cock has used up its fuel and fallen off! It is now {change} cm long.
     magnetic: Your cock has become a big magnet! You have dragged {change} cm from {target_user}!
+    shrink_ray: Oops! Looks like someone got hit by a shrink ray! Your cock now half of the size! It is now {change} cm long.
+    growth_spurt: Your cock experienced a Growth Spurt! You've grown by {change} cm! It is now {new_length} cm long.
+    phantom_shrink: A spooky Phantom Shrink reduces your cock size by {change} cm! It is now {new_length} cm long.
+    black_hole: A Black Hole appeared! Your cock lost {change} cm of size. It is now {new_length} cm long.
   join:
     already: You already have a cock!
     ok: You've joined the game! You have grown a basic penis 5 cm long!

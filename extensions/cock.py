@@ -116,6 +116,10 @@ class CockExtension(ModuleExtension):
             events.append((self.event_aging, CockConfig.PROB_AGING))
             events.append((self.event_rocket, CockConfig.PROB_ROCKET))
             events.append((self.event_magnetic, CockConfig.PROB_MAGNETIC))
+            events.append((self.event_shrink_ray, CockConfig.PROB_SHRINK_RAY))
+            events.append((self.event_growth_spurt, CockConfig.PROB_GROWTH_SPURT))
+            events.append((self.event_phantom_shrink, CockConfig.PROB_PHANTOM_SHRINK))
+            events.append((self.event_black_hole, CockConfig.PROB_BLACK_HOLE))
 
             eligible_events = [(event, weight) for event, weight in events if random.random() < weight]
 
@@ -222,6 +226,29 @@ class CockExtension(ModuleExtension):
 
         target_user = await fetch_user(bot, target_user_id, with_link=True)
         return self.S["cock"]["event"]["magnetic"].format(target_user=target_user, change=change)
+
+    async def event_shrink_ray(self, bot, chat_id, user_id, current_length):
+        change = round(current_length / 2, 1)
+        await self.set_cock_length(chat_id, user_id, change - current_length)
+        return self.S["cock"]["event"]["shrink_ray"].format(change=change)
+
+    async def event_growth_spurt(self, bot, chat_id, user_id, current_length):
+        change = random.randint(5, 15)
+        new_length = current_length + change
+        await self.set_cock_length(chat_id, user_id, change)
+        return self.S["cock"]["event"]["growth_spurt"].format(change=change, new_length=new_length)
+
+    async def event_phantom_shrink(self, bot, chat_id, user_id, current_length):
+        change = random.randint(5, 15)
+        await self.set_cock_length(chat_id, user_id, -change)
+        new_length = current_length - change
+        return self.S["cock"]["event"]["phantom_shrink"].format(change=change, new_length=new_length)
+
+    async def event_black_hole(self, bot, chat_id, user_id, current_length):
+        change = random.randint(2, 10)
+        await self.set_cock_length(chat_id, user_id, -change)
+        new_length = round(current_length - change, 1)
+        return self.S["cock"]["event"]["black_hole"].format(change=change, new_length=new_length)
 
     @command("cockjoin")
     async def join_cmd(self, bot: Client, message: Message):
