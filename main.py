@@ -13,6 +13,10 @@ from .db import Base
 
 class MiniGamesModule(BaseModule):
     @property
+    def help_page(self):
+        return self.S["help"]
+
+    @property
     def module_extensions(self) -> list[Type[ModuleExtension]]:
         return [
             CockExtension,

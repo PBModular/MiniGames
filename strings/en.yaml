@@ -1,3 +1,17 @@
+help: |
+  <b>🍆Cock:</b>
+  • <code>/cockjoin</code>
+  <b>Description:</b> Join the game.
+  • <code>/cockleave</code>
+  <b>Description:</b> Leave the game.
+  • <code>/cock</code>
+  <b>Description:</b> Play your turn.
+  • <code>/cockstat</code>
+  <b>Description:</b> View current standings and statistics.
+
+  <b>❎TicTacToe:</b>
+  • <code>/tictactoe</code>
+  <b>Description:</b> Start the game.
 cock:
   event:
     micro: Oh no, your cock has shrunk to microscopic size (0.1cm)!
