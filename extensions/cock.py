@@ -210,7 +210,7 @@ class CockExtension(ModuleExtension):
             return None
 
         target_user_id, target_length = random.choice(possible_targets)
-        change = max(1, (target_length / 2))
+        change = random.randint(1, (target_length * 0.6))
 
         async with self.db.session_maker() as session:
             user_cock_state = await session.scalar(
