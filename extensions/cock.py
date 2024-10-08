@@ -87,7 +87,8 @@ class CockExtension(ModuleExtension):
             return avg_length if avg_length is not None else 0
 
     def calculate_change(self, current_length):
-        increase_probability = max(0.35, 0.95 - (current_length / CockConfig.MAX_COCK_SIZE) * 0.60)
+        increase_probability = max(CockConfig.MIN_PROB_COCK_SIZE_INCREASE, CockConfig.MAX_PROB_COCK_SIZE_INCREASE
+                                    - (current_length / CockConfig.MAX_COCK_SIZE) * CockConfig.SCALING_FACTOR)
         rand_num = random.random()
 
         if (rand_num <= increase_probability):
