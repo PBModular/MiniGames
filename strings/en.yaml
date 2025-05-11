@@ -1,56 +1,81 @@
 help: |
-  <b>🍆Cock:</b>
+  <b>🍆The Grand Cock Game:</b>
+  Measure your might (or lack thereof) in this game of fluctuating fortunes!
   • <code>/cockjoin</code>
-  <b>Description:</b> Join the game.
+  <b>Description:</b> Ready to whip it out? Join the game and get your starter piece.
   • <code>/cockleave</code>
-  <b>Description:</b> Leave the game.
+  <b>Description:</b> Had enough? Tuck it away and leave the game. Your legend (or cautionary tale) remains.
   • <code>/cock</code>
-  <b>Description:</b> Play your turn.
+  <b>Description:</b> Time to play! See if your manhood grows, shrinks, or does something utterly bizarre.
   • <code>/cockstat</code>
-  <b>Description:</b> View current standings and statistics.
+  <b>Description:</b> Who's packing heat and who's just got... potential? View the current pecking order.
 
   <b>❎TicTacToe:</b>
   • <code>/tictactoe</code>
   <b>Description:</b> Start the game.
 cock:
   event:
-    micro: Oh no, your cock has shrunk to microscopic size (0.1cm)!
+    micro: "Catastrophe! {user}, your proud member has shriveled to a mere 0.1cm. Is that a dust bunny, or...?"
     rubber: 
-      message: You have been given a rubber cock for 4 rounds! Each move, it will randomly change its length!
-      change: Your rubber cock has changed in length and is now {change} cm! There are {remain} moves left.
-    teleport: The cock transplant operation with {fetch_user} was a success! Your penis is now {other_user_length} cm long!
-    aging: Your cock has crumpled and shrunk by 20%! It is now {new_length} cm long.
+      message: "Congratulations, {user}! You've been 'blessed' with a RUBBER COCK for {duration} rounds! It'll flop to a new random size each time. Unpredictable, just like life... or a cheap prosthetic."
+      change: "Boiyoiyoing! Your rubber cock wobbled and is now {change} cm! Only {remain} more moves of this flaccid fun."
+    teleport: "Emergency transplant! {user1}'s original piece was... unsatisfactory. After a dodgy back-alley swap with {user2}, {user1} now sports a dick of {user1_new_length} cm, while {user2} gets the, uh, 'experienced' model, now measuring {user2_new_length} cm. Hope you both like surprises!"
+    aging: "Oh dear, {user}. Time makes fools of us all, and apparently, prunes of our cocks. Yours has aged poorly, shrinking by 20%! It's now a rather wrinkly {new_length} cm."
     rocket: 
-      message: Your cock took off like a rocket and increased by 20 cm!
-      no_change: Your cock is still flying like a rocket! It is now {change} cm long.
-      change: Your cock has used up its fuel and fallen off! It is now {change} cm long.
-    magnetic: Your cock has become a big magnet! You have dragged {change} cm from {target_user}!
-    shrink_ray: Oops! Looks like someone got hit by a shrink ray! Your cock now half of the size! It is now {change} cm long.
-    growth_spurt: Your cock experienced a Growth Spurt! You've grown by {change} cm! It is now {new_length} cm long.
-    phantom_shrink: A spooky Phantom Shrink reduces your cock size by {change} cm! It is now {new_length} cm long.
-    black_hole: A Black Hole appeared! Your cock lost {change} cm of size. It is now {new_length} cm long.
-  join:
-    already: You already have a cock!
-    ok: You've joined the game! You have grown a basic penis 5 cm long!
-  leave:
-    ok: Your cock has been deleted, you have left the game!
-    not_participant: You don't have a cock to delete!
-  stat:
-    no_participants: No one has a cock yet!
-    list_header: |
-      <b>A list of players and the length of their cocks:</b>
+      message: "WOOOSH! {user}, your cock has achieved liftoff with an initial {initial_boost} cm boost, now a staggering {new_length} cm! It's on a {duration}-turn journey to the stars... or an embarrassing crash."
+      no_change: "Still rocketing, {user}! Your magnificent member is holding steady at {new_length} cm. {remain} turns left on this cosmic voyage!"
+      change: "KABOOM! ...or was that a sad 'pffft'? {user}, your rocket cock has spectacularly exploded (or fizzled out). It's now a rather underwhelming {new_length} cm. Back to Earth with you."
+    magnetic: "Zzzzap! {user}, your groin has become dangerously magnetic! You've violently yoinked {change} cm from poor {target_user}, leaving your own at a beefy {new_length} cm. Sharing is not caring today."
+    shrink_ray: "Zzzzzzzzzap! Oops, {user}, looks like you stood in front of the 'Shrink-O-Matic 5000'! Your cock is now half its former glory, a pocket-sized {new_length} cm. Cute!"
+    growth_spurt: "HOLY MOLY! {user}, your cock just hit puberty again! A massive Growth Spurt adds {change} cm, rocketing you to {new_length} cm! Don't get a big head... or, well, you know."
+    phantom_shrink: "A chilling breeze... {user}, a Spooky Phantom just fondled your junk and made off with {change} cm! You're now left with {new_length} cm and a sense of violation."
+    black_hole: "WHOA! A mini Black Hole just opened in your pants, {user}! It sucked {change} cm of your length into the void. You're now sporting a more compact {new_length} cm. Mind the singularity!"
+    average_recalibration: "{user}, the Bureau of Cock Standards has audited your equipment. After careful measurement against the local talent, your piece has been 're-calibrated' to the chat average of {avg_length} cm. Congratulations, you're perfectly, utterly, magnificently... average. How... normal."
+    phantom_limb:
+      initial: "SWEET MOTHER OF... {user}! Your cock just underwent a GARGANTUAN transformation! Our sensors are screaming it's now {fake_new_length} cm! Is this even possible?!"
+      reveal: "...PSYCH! {user}, our apologies. Turns out our sensors were just excited. It *actually* changed by a measly {tiny_real_change} cm. Details, details. Your member is, in reality, {final_real_length} cm. So much for that miracle."
+    borrower:
+      initial: "Feeling a bit... inadequate, {user}? Fret not! The ever-so-generous (they weren't asked) {lender_user} has 'lent' you {borrowed_amount} cm of their prime meat for {duration} turns! Try not to get too attached, it's not really yours."
+      return_success: "Payback's a bitch, {user}! The {amount} cm you borrowed has been surgically repossessed and successfully reattached to {lender}. Hope you enjoyed the upgrade while it lasted!"
+      return_fail_lender_gone: "Time to pay up, {user}! The {amount} cm loan is due. We tried to return it to {lender}, but they've vanished! Poof! So, the borrowed bits just... dematerialized. Easy come, easy go!"
+    existential_crisis:
+      initial: "Whoa there, {user}! Your cock has apparently achieved sentience and is now pondering the deep questions. It's currently meditating on: \"{philosophical_quote}\". Physical form is so... mundane. It's feeling rather conceptual right now."
+      quotes:
+        - "Why are we here... attached to this human?"
+        - "Is bigger always better, or is it the motion of the ocean... of consciousness?"
+        - "To throb, or not to throb, that is the question."
+        - "I think, therefore I... am... a cock?"
+        - "My existence is a paradox wrapped in fleshy enigma."
+        - "What if the real treasure was the friends we made along the way... and not just size?"
+      resolve: "Ah, {user}, your cock has returned from its philosophical retreat, hopefully with some enlightenment (or at least its physical form). It's now a more tangible {new_length} cm. Welcome back to the material world, little guy!"
+    humblebrag_tax:
+      payer_msg: "Well, well, {user}, aren't you the cock of the walk with that {tax_amount} cm specimen! The Cockmunity Chest has decided your flagrant display of endowment requires a 'Humblebrag Tax'. Consider it a donation to the less fortunate."
+      recipient_single_msg: "{recipient_user} is the lucky beneficiary, gaining {amount} cm from your 'generosity'!"
+      recipient_multi_msg: "The tax has been distributed! {recipient_list_str} each joyfully receive {amount_each} cm of your... contribution."
+      tax_vanished_no_recipients: "{user}, your {tax_amount} cm 'Humblebrag Tax' was collected, but alas, everyone else is apparently too well-off (or perhaps too proud) to accept charity. The funds have mysteriously disappeared into 'administrative fees'."
+      tax_vanished_too_small_split: "{user}, your {tax_amount} cm 'Humblebrag Tax' was levied, but splitting it among the needy resulted in such pitiful amounts it wasn't worth the paperwork. It's been... 'reinvested'."
 
-    list: |
-      {place}. {profile_link}: {cock_length} cm
-      
+  join:
+    already: "Easy there, tiger! You're already in the game. One cock per customer, please."
+    ok: "Alright, {user}, you're in! You've bravely whipped out a standard-issue {default_size} cm penis. Let's see what you make of it!"
+  leave:
+    ok: "It's been emotional, {user}. Your cock has been respectfully (or hilariously, depending on its history) retired. You've left the game."
+    not_participant: "Hold on, {user}! You can't leave if you never joined. No cock to delete here, buddy."
+  stat:
+    no_participants: "This chat is a barren wasteland of cocklessness! No one's playing yet. Be the first!"
+    list_header: |
+      <b>🏆 The Official Cock Championship Leaderboard 🏆</b>
+      <i>(Sizes approximate, egos inflated)</i>
+    list_entry: |
+      {place}. {profile_link} - {cock_length_display}
     average: |
       
-      Average cock length in chat: {average} cm
-  not_participant: You don't have a cock! Use the /cockjoin command to grow a basic 5 cm long penis.
+      <i>The collective testosterone in this chat averages out to a mighty (or meek) {average} cm.</i>
+  not_participant: "Whoa there, {user}! You need to actually HAVE a cock to play with it. Use <code>/cockjoin</code> to grow your very own {default_size} cm starter kit."
   cooldown: |
-    The command can only be used once every 24 hours. Still waiting: {hours}h. {minutes}m.
+    Patience, {user}, patience! Your member needs rest. Command available in {hours}h {minutes}m. Don't chafe it!
   change: |
-    Your cock is now {new_length} cm long (change: {change} cm).
+    Ding ding ding! {user}, your cock is now {new_length} cm long (Change: {change_sign}{change} cm). Onwards and upwards (or downwards)!
 
 tictactoe:
   already_game: The game is already in progress!
