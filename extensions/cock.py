@@ -476,12 +476,13 @@ class CockExtension(ModuleExtension):
                 return
 
             now = datetime.utcnow()
-            if cock_state.cooldown and now - cock_state.cooldown < timedelta(hours=CockConfig.COOLDOWN_HOURS):
-                time_remaining = timedelta(hours=CockConfig.COOLDOWN_HOURS) - (now - cock_state.cooldown)
-                hours, remainder = divmod(int(time_remaining.total_seconds()), 3600)
-                minutes, _ = divmod(remainder, 60)
-                await message.reply(self.S["cock"]["cooldown"].format(hours=hours, minutes=minutes))
-                return
+            if not CockConfig.DEBUG_MODE:
+                if cock_state.cooldown and now - cock_state.cooldown < timedelta(hours=CockConfig.COOLDOWN_HOURS):
+                    time_remaining = timedelta(hours=CockConfig.COOLDOWN_HOURS) - (now - cock_state.cooldown)
+                    hours, remainder = divmod(int(time_remaining.total_seconds()), 3600)
+                    minutes, _ = divmod(remainder, 60)
+                    await message.reply(self.S["cock"]["cooldown"].format(hours=hours, minutes=minutes))
+                    return
 
             current_length = float(cock_state.cock_size)
             user_mention = await fetch_user(bot, user_id, with_link=True)

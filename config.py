@@ -1,4 +1,7 @@
 class CockConfig:
+    # Debug mode
+    DEBUG_MODE = True  # Set to True to bypass cooldowns for testing
+
     # Default values for cock size
     DEFAULT_COCK_SIZE = 5.0
     MAX_COCK_SIZE = 60.0 # 60-200 cm is most ideal (That doesn't mean the size can't go higher. It is used for correct event calculation)
