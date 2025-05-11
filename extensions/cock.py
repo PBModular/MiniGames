@@ -93,10 +93,10 @@ class CockExtension(ModuleExtension):
         rand_num = random.random()
 
         if (rand_num <= increase_probability):
-            change = random.randint(1, min(CockConfig.DEFAULT_COCK_SIZE, CockConfig.MAX_COCK_SIZE - current_length))
+            change = random.uniform(1.0, float(CockConfig.DEFAULT_COCK_SIZE))
         else:
-            max_decrease = max(1, (current_length * 0.25))
-            change = -random.randint(1, int(max_decrease))
+            max_decrease = max(1.0, current_length * 0.25)
+            change = -random.uniform(1.0, max_decrease)
 
         return change
 
