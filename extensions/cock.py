@@ -396,7 +396,7 @@ class CockExtension(ModuleExtension):
         stats_message = self.S["cock"]["stat"]["list_header"]
         for place, (user_id, cock_length) in enumerate(sorted_participants, start=1):
             profile_link = await fetch_user(bot, user_id, with_link=False)
-            stats_message += self.S["cock"]["stat"]["list"].format(place=place, profile_link=profile_link, cock_length=cock_length)
+            stats_message += self.S["cock"]["stat"]["list"].format(place=place, profile_link=profile_link, cock_length=round(cock_length, 1))
 
         stats_message += self.S["cock"]["stat"]["average"].format(average=round(average_length, 2))
 
