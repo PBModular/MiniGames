@@ -54,6 +54,11 @@ cock:
       recipient_multi_msg: "The tax has been distributed! {recipient_list_str} each joyfully receive {amount_each} cm of your... contribution."
       tax_vanished_no_recipients: "{user}, your {tax_amount} cm 'Humblebrag Tax' was collected, but alas, everyone else is apparently too well-off (or perhaps too proud) to accept charity. The funds have mysteriously disappeared into 'administrative fees'."
       tax_vanished_too_small_split: "{user}, your {tax_amount} cm 'Humblebrag Tax' was levied, but splitting it among the needy resulted in such pitiful amounts it wasn't worth the paperwork. It's been... 'reinvested'."
+    confession:
+      prompt: "A strange urge overcomes you, {user}! You feel a confession brewing. Reveal it the next time you use /cock by typing `/cock [your confession]`."
+      accepted: "Ah, {user}, a bold confession: '{confession}'! The spirits are... amused. Your cock size remains unchanged by this revelation (this time!)."
+      missed: "{user}, you were supposed to confess with `/cock [your confession]`! The urge passes... for now. No change from that."
+      recall: "\nP.S. Hey {user}, remember when you confessed: '{past_confession}'? Good times."
 
   join:
     already: "Easy there, tiger! You're already in the game. One cock per customer, please."
