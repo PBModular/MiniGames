@@ -119,8 +119,11 @@ class CockExtension(ModuleExtension):
             if not cock_state or cock_state.active_event:
                 return None
 
-            events_config = []
-            events_config.extend([
+            if random.random() >= CockConfig.PROB_ANY_SPECIAL_EVENT:
+                return None
+
+            event_candidates_with_weights_raw = []
+            event_candidates_with_weights_raw.extend([
                 (self.event_micro, CockConfig.PROB_MICRO) if current_length > (CockConfig.MAX_COCK_SIZE * 0.7) else None,
                 (self.event_rubber, CockConfig.PROB_RUBBER),
                 (self.event_teleport, CockConfig.PROB_TELEPORT),
@@ -139,17 +142,20 @@ class CockExtension(ModuleExtension):
                 (self.event_confession_prompt, CockConfig.PROB_CONFESSION),
             ])
 
-            events_config = list(filter(None, events_config))
+            eligible_event_functions = []
+            event_weights = []
 
-            eligible_events = []
-            for event_func, prob in events_config:
-                if random.random() < prob:
-                    eligible_events.append(event_func)
-
-            if not eligible_events:
+            for candidate_tuple in event_candidates_with_weights_raw:
+                if candidate_tuple is not None:
+                    event_func, weight = candidate_tuple
+                    if weight > 0:
+                        eligible_event_functions.append(event_func)
+                        event_weights.append(weight)
+            
+            if not eligible_event_functions:
                 return None
 
-            chosen_event_func = random.choice(eligible_events)
+            chosen_event_func = random.choices(eligible_event_functions, weights=event_weights, k=1)[0]
 
             return await chosen_event_func(bot, chat_id, user_id, current_length, session, cock_state)
             
@@ -394,13 +400,15 @@ class CockExtension(ModuleExtension):
 
         sorted_participants = sorted(all_participants_data, key=lambda x: x[1], reverse=True)
 
-        top_20_percent_cutoff = int(len(sorted_participants) * 0.2)
-        if top_20_percent_cutoff == 0 and len(sorted_participants) > 0 : top_20_percent_cutoff = 1
+        top_20_percent_cutoff_index = int(len(sorted_participants) * 0.2)
+        if top_20_percent_cutoff_index == 0 and len(sorted_participants) > 0 : top_20_percent_cutoff_index = 1
 
         is_top_player = False
+        user_rank = -1
         for i, (p_id, p_size) in enumerate(sorted_participants):
             if p_id == user_id:
-                if i < top_20_percent_cutoff:
+                user_rank = i
+                if i < top_20_percent_cutoff_index:
                     is_top_player = True
                 break
         if not is_top_player: return None
@@ -408,13 +416,20 @@ class CockExtension(ModuleExtension):
         tax_percentage = random.uniform(0.10, 0.25)
         tax_amount_raw = current_length * tax_percentage
         tax_amount = min(tax_amount_raw, current_length - float(CockConfig.MIN_COCK_SIZE))
-        tax_amount = round(max(0.1, tax_amount),1) 
+        tax_amount = round(max(0.1, tax_amount),1)
         if tax_amount < 0.5: return None
 
-        await self.set_cock_length(chat_id, user_id, -tax_amount, skip_event_duration_decrement=True) 
+        await self.set_cock_length(chat_id, user_id, -tax_amount, skip_event_duration_decrement=True)
 
         bottom_50_percent_start_index = len(sorted_participants) - int(len(sorted_participants) * 0.5)
-        eligible_recipients_data = [p for i, p in enumerate(sorted_participants) if i >= bottom_50_percent_start_index and p[0] != user_id]
+        if bottom_50_percent_start_index == len(sorted_participants) and len(sorted_participants)>0:
+            bottom_50_percent_start_index = len(sorted_participants) -1
+
+        eligible_recipients_data = [
+            p for i, p in enumerate(sorted_participants) 
+            if i >= bottom_50_percent_start_index and p[0] != user_id
+        ]
+
 
         if not eligible_recipients_data:
             return get_s(self.S, "cock.event.humblebrag_tax.tax_vanished_no_recipients", user=user_mention, tax_amount=tax_amount)
@@ -516,67 +531,81 @@ class CockExtension(ModuleExtension):
             initial_event_duration = cock_state.event_duration
             initial_event_data_str = cock_state.event_data
 
-            if initial_active_event == "confession_pending" and initial_event_duration == 1:
-                if confession_text_arg:
-                    cock_state.last_confession = confession_text_arg
-                    resolution_message_parts.append(
-                        get_s(self.S, "cock.event.confession.accepted", user=user_mention, confession=confession_text_arg)
-                    )
-                else:
-                    resolution_message_parts.append(
-                        get_s(self.S, "cock.event.confession.missed", user=user_mention)
-                    )
-                cock_state.active_event = None
-                cock_state.event_duration = 0
-
-            elif initial_active_event == "phantom_limb_active" and initial_event_duration == 1:
-                if initial_event_data_str:
-                    data = json.loads(initial_event_data_str)
-                    resolution_message_parts.append(get_s(self.S, "cock.event.phantom_limb.reveal",
-                        user=user_mention, 
-                        tiny_real_change=data.get("tiny_real_change_applied", 0.0), 
-                        final_real_length=data.get("final_real_length", cock_state.cock_size)
-                    ))
-
-            elif initial_active_event == "borrower_active" and initial_event_duration == 1:
-                if initial_event_data_str:
-                    data = json.loads(initial_event_data_str)
-                    lender_id = data["lender_id"]
-                    returned_amount = float(data["borrowed_amount"])
-
-                    cock_state.cock_size -= returned_amount
-                    cock_state.cock_size = round(max(float(CockConfig.MIN_COCK_SIZE), cock_state.cock_size), 1)
-
-                    lender_mention_str = await fetch_user(bot, lender_id, with_link=True)
-                    lender_cock_state = await session.get(CockState, (chat_id, lender_id))
-                    if lender_cock_state and lender_cock_state.is_participating:
-                        lender_cock_state.cock_size += returned_amount
-                        lender_cock_state.cock_size = round(max(float(CockConfig.MIN_COCK_SIZE), lender_cock_state.cock_size),1)
-                        session.add(lender_cock_state)
-                        resolution_message_parts.append(get_s(self.S, "cock.event.borrower.return_success",
-                            user=user_mention, amount=returned_amount, lender=lender_mention_str))
+            if initial_active_event and initial_event_duration == 1:
+                if initial_active_event == "confession_pending":
+                    if confession_text_arg:
+                        cock_state.last_confession = confession_text_arg
+                        resolution_message_parts.append(
+                            get_s(self.S, "cock.event.confession.accepted", user=user_mention, confession=confession_text_arg)
+                        )
                     else:
-                        resolution_message_parts.append(get_s(self.S, "cock.event.borrower.return_fail_lender_gone",
-                            user=user_mention, amount=returned_amount, lender=lender_mention_str))
+                        resolution_message_parts.append(
+                            get_s(self.S, "cock.event.confession.missed", user=user_mention)
+                        )
+                    cock_state.active_event = None 
+                    cock_state.event_duration = 0
+                    cock_state.event_data = None
 
-            elif initial_active_event == "existential_crisis_active" and initial_event_duration == 1:
-                if initial_event_data_str:
-                    data = json.loads(initial_event_data_str)
-                    original_length = float(data.get("original_length", cock_state.cock_size))
-                    small_random_change = round(random.uniform(-1.0, 1.0), 1)
-                    resolved_length = max(float(CockConfig.MIN_COCK_SIZE), round(original_length + small_random_change, 1))
-                    cock_state.cock_size = resolved_length
-                    resolution_message_parts.append(get_s(self.S, "cock.event.existential_crisis.resolve",
-                        user=user_mention, new_length=resolved_length))
 
-            if resolution_message_parts:
-                await message.reply("\n".join(resolution_message_parts))
+                elif initial_active_event == "phantom_limb_active":
+                    if initial_event_data_str:
+                        data = json.loads(initial_event_data_str)
+                        tiny_real_change = data.get("tiny_real_change_applied", 0.0)
+                        final_length_after_reveal = cock_state.cock_size
+                        resolution_message_parts.append(get_s(self.S, "cock.event.phantom_limb.reveal",
+                            user=user_mention, 
+                            tiny_real_change=tiny_real_change, 
+                            final_real_length=final_length_after_reveal
+                        ))
+                    cock_state.active_event = None
+                    cock_state.event_duration = 0
+                    cock_state.event_data = None
+
+
+                elif initial_active_event == "borrower_active":
+                    if initial_event_data_str:
+                        data = json.loads(initial_event_data_str)
+                        lender_id = data["lender_id"]
+                        returned_amount = float(data["borrowed_amount"])
+
+                        cock_state.cock_size -= returned_amount
+                        cock_state.cock_size = round(max(float(CockConfig.MIN_COCK_SIZE), cock_state.cock_size), 1)
+
+                        lender_mention_str = await fetch_user(bot, lender_id, with_link=True)
+                        lender_cock_state = await session.get(CockState, (chat_id, lender_id))
+                        if lender_cock_state and lender_cock_state.is_participating:
+                            lender_cock_state.cock_size += returned_amount
+                            lender_cock_state.cock_size = round(max(float(CockConfig.MIN_COCK_SIZE), lender_cock_state.cock_size),1)
+                            session.add(lender_cock_state)
+                            resolution_message_parts.append(get_s(self.S, "cock.event.borrower.return_success",
+                                user=user_mention, amount=returned_amount, lender=lender_mention_str))
+                        else:
+                            resolution_message_parts.append(get_s(self.S, "cock.event.borrower.return_fail_lender_gone",
+                                user=user_mention, amount=returned_amount, lender=lender_mention_str))
+                    cock_state.active_event = None
+                    cock_state.event_duration = 0
+                    cock_state.event_data = None
+
+                elif initial_active_event == "existential_crisis_active":
+                    if initial_event_data_str:
+                        data = json.loads(initial_event_data_str)
+                        original_length = float(data.get("original_length", cock_state.cock_size))
+                        small_random_change = round(random.uniform(-1.0, 1.0), 1)
+                        resolved_length = max(float(CockConfig.MIN_COCK_SIZE), round(original_length + small_random_change, 1))
+                        cock_state.cock_size = resolved_length
+                        resolution_message_parts.append(get_s(self.S, "cock.event.existential_crisis.resolve",
+                            user=user_mention, new_length=resolved_length))
+                    cock_state.active_event = None
+                    cock_state.event_duration = 0
+                    cock_state.event_data = None
+
                 session.add(cock_state)
                 await session.commit()
                 cock_state = await session.scalar(
                     select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id).with_for_update()
                 )
-
+            if resolution_message_parts:
+                await message.reply("\n".join(resolution_message_parts))
 
             current_length = float(cock_state.cock_size)
             main_roll_message = None
@@ -595,7 +624,7 @@ class CockExtension(ModuleExtension):
                     await self.set_cock_length(chat_id, user_id, new_random_size, absolute=False) 
                     main_roll_message = get_s(self.S, "cock.event.rubber.change",
                         new_length=new_random_size, 
-                        remain=max(0, cock_state.event_duration)
+                        remain=max(0, cock_state.event_duration -1)
                     )
                 elif cock_state.active_event == "rocket":
                     rocket_exploded = random.random() < 0.3
@@ -606,7 +635,7 @@ class CockExtension(ModuleExtension):
                         main_roll_message = get_s(self.S, "cock.event.rocket.no_change",
                             user=user_mention,
                             new_length=new_length_after_growth, 
-                            remain=max(0, cock_state.event_duration)
+                            remain=max(0, cock_state.event_duration -1)
                         )
                     else:
                         new_total_length_after_explosion = round(max(CockConfig.MIN_COCK_SIZE, current_length / 3.0),1)
@@ -645,12 +674,15 @@ class CockExtension(ModuleExtension):
                             change_sign="+" if change_delta >=0 else "",
                             change=round(change_delta, 1)
                         )
+            cock_state = await session.scalar(
+                select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id).with_for_update()
+            )
 
             if cock_state.last_confession and not cock_state.active_event:
                 if random.random() < CockConfig.PROB_RECALL_CONFESSION:
                     recall_msg_part = get_s(self.S, "cock.event.confession.recall", user=user_mention, past_confession=cock_state.last_confession)
                     if main_roll_message:
-                        main_roll_message += recall_msg_part
+                        main_roll_message += f"\n{recall_msg_part}"
                     else:
                         main_roll_message = recall_msg_part 
 
@@ -698,6 +730,10 @@ class CockExtension(ModuleExtension):
                     display_length_str = f"({quote[:25]}...)" if len(quote) > 28 else f"({quote})"
                 except json.JSONDecodeError:
                     display_length_str = "(Deep Thoughts)"
+            elif active_event == "rubber":
+                 display_length_str += get_s(self.S, "cock.stat.event_suffix.rubber")
+            elif active_event == "rocket":
+                 display_length_str += get_s(self.S, "cock.stat.event_suffix.rocket")
 
             profile_link = await fetch_user(bot, user_id, with_link=False)
             stats_message_parts.append(
