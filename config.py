@@ -1,6 +1,6 @@
 class CockConfig:
     # Debug mode
-    DEBUG_MODE = True  # Set to True to bypass cooldowns for testing
+    DEBUG_MODE = False  # Set to True to bypass cooldowns for testing
 
     # Default values for cock size
     DEFAULT_COCK_SIZE = 5.0
