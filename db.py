@@ -16,7 +16,9 @@ class CockState(Base):
     event_duration: Mapped[int] = mapped_column(default=0)
     cooldown: Mapped[Optional[datetime]] = mapped_column(nullable=True, default=None)
     event_data: Mapped[Optional[str]] = mapped_column(nullable=True)
+    last_confession: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     def __repr__(self):
         return f"chat_id={self.chat_id}, user_id={self.user_id}, cock_size={self.cock_size}, is_participating={self.is_participating}, \
-            active_event={self.active_event}, event_duration={self.event_duration}, cooldown={self.cooldown}, event_data={self.event_data}"
+            active_event={self.active_event}, event_duration={self.event_duration}, cooldown={self.cooldown}, event_data={self.event_data}, \
+            last_confession={self.last_confession}"
