@@ -186,9 +186,13 @@ class CockExtension(ModuleExtension):
         if not other_cock_state: return None
 
         original_self_length = cock_state_self.cock_size
-        cock_state_self.cock_size = other_cock_state.cock_size
-        other_cock_state.cock_size = original_self_length
 
+        new_self_size = other_cock_state.cock_size
+        new_other_size = original_self_length
+
+        cock_state_self.cock_size = new_self_size
+        other_cock_state.cock_size = new_other_size
+        
         cock_state_self.cock_size = max(float(CockConfig.MIN_COCK_SIZE), round(float(cock_state_self.cock_size),1))
         other_cock_state.cock_size = max(float(CockConfig.MIN_COCK_SIZE), round(float(other_cock_state.cock_size),1))
 
