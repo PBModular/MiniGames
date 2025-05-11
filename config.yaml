@@ -1,7 +1,7 @@
 info:
   name: MiniGames
   author: Ultra119
-  version: 1.1
+  version: 1.2
   description: Some stupid minigames collection
   src_url: https://github.com/PBModular/MiniGames
   python: 3.13
