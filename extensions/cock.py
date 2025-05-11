@@ -167,11 +167,12 @@ class CockExtension(ModuleExtension):
 
     async def event_teleport(self, bot, chat_id, user_id, current_length):
         participants = await self.get_all_participants(chat_id)
-        if len(participants) < 2:
+        
+        possible_targets = [p for p in participants if p[0] != user_id]
+        if len(possible_targets) < 1:
             return None
 
-        other_user_id, other_user_length = random.choice([p for p in participants if p[0] != user_id])
-        fetch_user = await fetch_user(bot, user_id, with_link=True)
+        other_user_id, other_user_original_length = random.choice(possible_targets) 
 
         async with self.db.session_maker() as session:
             user_cock_state = await session.scalar(
@@ -187,7 +188,11 @@ class CockExtension(ModuleExtension):
             session.add(other_cock_state)
             await session.commit()
 
-        return self.S["cock"]["event"]["teleport"].format(fetch_user=fetch_user, other_user_length=other_user_length)
+        current_user_display_name = await fetch_user(bot, user_id, with_link=True)
+        return self.S["cock"]["event"]["teleport"].format(
+            fetch_user=current_user_display_name, 
+            other_user_length=round(other_user_original_length, 1)
+        )
 
     async def event_aging(self, bot, chat_id, user_id, current_length):
         new_length = round(current_length * 0.8, 1)
