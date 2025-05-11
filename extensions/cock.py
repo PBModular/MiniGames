@@ -143,23 +143,15 @@ class CockExtension(ModuleExtension):
             if total_prob_sum == 0:
                 return None
 
-            eligible_events = [(event_func, weight) for event_func, weight in events_config if random.random() < weight]
+            eligible_events = []
+            for event_func, prob in events_config:
+                if random.random() < prob:
+                    eligible_events.append(event_func)
 
             if not eligible_events:
                 return None
 
-            total_weight = sum(weight for _, weight in eligible_events)
-            if total_weight == 0: return None
-
-            rand_choice = random.uniform(0, total_weight)
-            cumulative_weight = 0.0
-            chosen_event_func = None
-
-            for event_func, weight in eligible_events:
-                cumulative_weight += weight
-                if rand_choice <= cumulative_weight:
-                    chosen_event_func = event_func
-                    break
+            chosen_event_func = random.choice(eligible_events)
             
             if chosen_event_func:
                 return await chosen_event_func(bot, chat_id, user_id, current_length, session, cock_state)
