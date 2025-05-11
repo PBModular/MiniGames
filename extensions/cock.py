@@ -160,7 +160,7 @@ class CockExtension(ModuleExtension):
 
     async def event_micro(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
-        await self.set_cock_length(chat_id, user_id, 0.1, absolute=True)
+        await self.set_cock_length(chat_id, user_id, 0.1, absolute=True, skip_event_duration_decrement=True)
         return self.S["cock"]["event"]["micro"].format(user=user_mention)
 
     async def event_rubber(self, bot, chat_id, user_id, current_length, session, cock_state):
@@ -208,7 +208,7 @@ class CockExtension(ModuleExtension):
     async def event_aging(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
         new_length = round(current_length * 0.8, 1)
-        await self.set_cock_length(chat_id, user_id, new_length, absolute=True)
+        await self.set_cock_length(chat_id, user_id, new_length, absolute=True, skip_event_duration_decrement=True)
         return self.S["cock"]["event"]["aging"].format(user=user_mention, new_length=new_length)
 
     async def event_rocket(self, bot, chat_id, user_id, current_length, session, cock_state):
@@ -216,7 +216,7 @@ class CockExtension(ModuleExtension):
         cock_state.active_event = "rocket"
         cock_state.event_duration = random.randint(CockConfig.EVENT_ROCKET_MIN_DURATION, CockConfig.EVENT_ROCKET_MAX_DURATION)
         initial_boost = 20.0
-        await self.set_cock_length(chat_id, user_id, initial_boost)
+        await self.set_cock_length(chat_id, user_id, initial_boost, skip_event_duration_decrement=True)
         new_length_after_boost = await self.get_cock_length(chat_id, user_id)
         session.add(cock_state)
         await session.commit()
@@ -264,27 +264,27 @@ class CockExtension(ModuleExtension):
     async def event_shrink_ray(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
         new_length = round(max(float(CockConfig.MIN_COCK_SIZE), current_length / 2), 1)
-        await self.set_cock_length(chat_id, user_id, new_length, absolute=True)
+        await self.set_cock_length(chat_id, user_id, new_length, absolute=True, skip_event_duration_decrement=True)
         return self.S["cock"]["event"]["shrink_ray"].format(user=user_mention, new_length=new_length)
 
     async def event_growth_spurt(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
         change = random.randint(5, 15)
-        await self.set_cock_length(chat_id, user_id, float(change))
+        await self.set_cock_length(chat_id, user_id, float(change), skip_event_duration_decrement=True)
         new_length = await self.get_cock_length(chat_id, user_id)
         return self.S["cock"]["event"]["growth_spurt"].format(user=user_mention, change=change, new_length=new_length)
 
     async def event_phantom_shrink(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
         change = random.randint(5, 15)
-        await self.set_cock_length(chat_id, user_id, -float(change))
+        await self.set_cock_length(chat_id, user_id, -float(change), skip_event_duration_decrement=True)
         new_length = await self.get_cock_length(chat_id, user_id)
         return self.S["cock"]["event"]["phantom_shrink"].format(user=user_mention, change=change, new_length=new_length)
 
     async def event_black_hole(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
         change = random.randint(2, 10)
-        await self.set_cock_length(chat_id, user_id, -float(change))
+        await self.set_cock_length(chat_id, user_id, -float(change), skip_event_duration_decrement=True)
         new_length = await self.get_cock_length(chat_id, user_id)
         return self.S["cock"]["event"]["black_hole"].format(user=user_mention, change=change, new_length=new_length)
 
@@ -292,7 +292,7 @@ class CockExtension(ModuleExtension):
         user_mention = await fetch_user(bot, user_id, with_link=True)
         avg_length = await self.get_average_length(chat_id)
         if avg_length > 0 and abs(current_length - avg_length) > 0.1:
-            await self.set_cock_length(chat_id, user_id, avg_length, absolute=True)
+            await self.set_cock_length(chat_id, user_id, avg_length, absolute=True, skip_event_duration_decrement=True)
             return self.S["cock"]["event"]["average_recalibration"].format(user=user_mention, avg_length=round(avg_length, 1))
         return None
 
