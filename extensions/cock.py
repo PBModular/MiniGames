@@ -634,25 +634,37 @@ class CockExtension(ModuleExtension):
     @command("cockstat")
     async def cockstat_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
-        participants_data = await self.get_all_participants(chat_id)
-        average_length = await self.get_average_length(chat_id)
+        async with self.db.session_maker() as session:
+            participants_result = await session.execute(
+                select(CockState.user_id, CockState.cock_size, CockState.active_event, CockState.event_data)
+                .where(CockState.chat_id == chat_id, CockState.is_participating == True)
+            )
+            participants_data = participants_result.all()
+
+            avg_length_result = await session.execute(
+                select(func.avg(CockState.cock_size)).where(CockState.chat_id == chat_id, CockState.is_participating == True)
+            )
+            average_length = avg_length_result.scalar()
+            average_length = float(average_length) if average_length is not None else 0.0
 
         if not participants_data:
             await message.reply(self.S["cock"]["stat"]["no_participants"])
             return
 
-        sorted_participants = sorted(participants_data, key=lambda x: x[1], reverse=True)
+        processed_participants = []
+        for p_id, p_size, p_active_event, p_event_data_str in participants_data:
+            size = float(p_size) if p_size is not None else float(CockConfig.DEFAULT_COCK_SIZE)
+            processed_participants.append( (p_id, size, p_active_event, p_event_data_str) )
+
+        sorted_participants = sorted(processed_participants, key=lambda x: x[1], reverse=True)
 
         stats_message_parts = [self.S["cock"]["stat"]["list_header"]]
-        for place, (user_id, cock_length) in enumerate(sorted_participants, start=1):
-            async with self.db.session_maker() as s:
-                p_state = await s.get(CockState, (chat_id, user_id))
-
+        for place, (user_id, cock_length, active_event, event_data_str) in enumerate(sorted_participants, start=1):
             display_length_str = f"{round(cock_length, 1)} cm"
-            if p_state and p_state.active_event == "existential_crisis_active" and p_state.event_data:
+            if active_event == "existential_crisis_active" and event_data_str:
                 try:
-                    crisis_data = json.loads(p_state.event_data)
-                    display_length_str = f"({crisis_data.get('quote', 'In Crisis')})"
+                    crisis_data = json.loads(event_data_str)
+                    display_length_str = f"({crisis_data.get('quote', 'In Deep Thought')})"
                 except json.JSONDecodeError:
                     display_length_str = "(Deep Thoughts)"
 
