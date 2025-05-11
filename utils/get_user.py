@@ -1,4 +1,3 @@
-@staticmethod
 async def fetch_user(bot, user_id, with_link=False):
     user = await bot.get_users(user_id)
     
