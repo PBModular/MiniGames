@@ -45,11 +45,12 @@ class CockExtension(ModuleExtension):
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == user_id).with_for_update()
             )
             if cock_state.active_event == "rubber":
-                cock_state.cock_size = change
+                cock_state.cock_size = float(change)
             else:
-                cock_state.cock_size += change
+                cock_state.cock_size += float(change)
 
             cock_state.cock_size = round(cock_state.cock_size, 1)
+            cock_state.cock_size = max(float(CockConfig.MIN_COCK_SIZE), cock_state.cock_size)
 
             if cock_state.event_duration > 0:
                 cock_state.event_duration -= 1
