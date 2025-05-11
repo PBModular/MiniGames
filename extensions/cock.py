@@ -312,6 +312,7 @@ class CockExtension(ModuleExtension):
         chat_id = message.chat.id
         user_id = message.from_user.id
         participants = await self.get_participants(chat_id)
+        current_length = await self.get_cock_length(chat_id, user_id)
 
         if user_id not in participants:
             await message.reply(self.S["cock"]["not_participant"])
@@ -330,33 +331,50 @@ class CockExtension(ModuleExtension):
                 await message.reply(self.S["cock"]["cooldown"].format(hours=hours, minutes=minutes))
                 return
 
-            current_length = await self.get_cock_length(chat_id, user_id)
             special_event_message = await self.check_special_events(bot, chat_id, user_id, current_length)
 
             if special_event_message:
                 await message.reply(special_event_message)
-            else:
-                if cock_state.active_event == "rubber" and cock_state.event_duration > 0:
-                    change = random.randint(CockConfig.MIN_COCK_SIZE, CockConfig.MAX_COCK_SIZE)
-                    await self.set_cock_length(chat_id, user_id, change)
-                    return self.S["cock"]["event"]["rubber"]["change"].format(change=change, remain=(cock_state.event_duration - 1))
-                elif cock_state.active_event == "rocket" and cock_state.event_duration > 0:
-                    if random.random() < 0.5:
-                        cock_state.event_duration -= 1
-                        change = current_length + random.randint(10, 20)
-                        await self.set_cock_length(chat_id, user_id, change)
-                        result_message = self.S["cock"]["event"]["rocket"]["no_change"].format(change=change)
-                    else:
-                        cock_state.event_duration = 0
-                        change = current_length / 4
-                        await self.set_cock_length(chat_id, user_id, change)
-                        result_message = self.S["cock"]["event"]["rocket"]["change"].format(change=change)
-                else:
-                    change = self.calculate_change(current_length)
-                    await self.set_cock_length(chat_id, user_id, change)
-                    new_length = await self.get_cock_length(chat_id, user_id)
-                    result_message = self.S["cock"]["change"].format(new_length=new_length, change=change)
 
+            elif cock_state.active_event == "rubber":
+                new_random_size = random.uniform(float(CockConfig.MIN_COCK_SIZE), float(CockConfig.MAX_COCK_SIZE))
+                await self.set_cock_length(chat_id, user_id, new_random_size)
+                result_message = self.S["cock"]["event"]["rubber"]["change"].format(
+                    change=round(new_random_size, 1), 
+                    remain=cock_state.event_duration
+                )
+                await message.reply(result_message)
+
+            elif cock_state.active_event == "rocket":
+                rocket_exploded = random.random() >= 0.5
+
+                if not rocket_exploded:
+                    delta = random.uniform(10.0, 20.0)
+                    await self.set_cock_length(chat_id, user_id, delta)
+                    new_length_after_growth = await self.get_cock_length(chat_id, user_id)
+                    result_message = self.S["cock"]["event"]["rocket"]["no_change"].format(
+                        change=round(new_length_after_growth, 1), 
+                        remain=cock_state.event_duration
+                    )
+                else:
+                    new_total_length_after_explosion = current_length / 4.0
+                    delta_shrink = new_total_length_after_explosion - current_length
+                    await self.set_cock_length(chat_id, user_id, delta_shrink)
+                    cock_state.active_event = None
+                    cock_state.event_duration = 0
+                    
+                    result_message = self.S["cock"]["event"]["rocket"]["change"].format(
+                        change=round(new_total_length_after_explosion, 1)
+                    )
+                await message.reply(result_message)
+            else:
+                change_delta = self.calculate_change(current_length)
+                await self.set_cock_length(chat_id, user_id, change_delta)
+                new_length = await self.get_cock_length(chat_id, user_id)
+                result_message = self.S["cock"]["change"].format(
+                    new_length=round(new_length, 1), 
+                    change=round(change_delta, 1)
+                )
                 await message.reply(result_message)
 
             cock_state.cooldown = now
