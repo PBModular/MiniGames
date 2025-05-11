@@ -167,15 +167,17 @@ class CockExtension(ModuleExtension):
             return None
 
     async def event_micro(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         await self.set_cock_length(chat_id, user_id, 0.1, absolute=True)
-        return self.S["cock"]["event"]["micro"]
+        return self.S["cock"]["event"]["micro"].format(user=user_mention)
 
     async def event_rubber(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         cock_state.active_event = "rubber"
         cock_state.event_duration = CockConfig.EVENT_RUBBER_DURATION
         session.add(cock_state)
         await session.commit()
-        return self.S["cock"]["event"]["rubber"]["message"]
+        return self.S["cock"]["event"]["rubber"]["message"].format(user=user_mention, duration=cock_state.event_duration)
 
     async def event_teleport(self, bot, chat_id, user_id, current_length, session, cock_state_self):
         participants = await self.get_all_participants(chat_id)
@@ -212,11 +214,13 @@ class CockExtension(ModuleExtension):
         )
 
     async def event_aging(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         new_length = round(current_length * 0.8, 1)
         await self.set_cock_length(chat_id, user_id, new_length, absolute=True)
-        return self.S["cock"]["event"]["aging"].format(new_length=new_length)
+        return self.S["cock"]["event"]["aging"].format(user=user_mention, new_length=new_length)
 
     async def event_rocket(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         cock_state.active_event = "rocket"
         cock_state.event_duration = random.randint(CockConfig.EVENT_ROCKET_MIN_DURATION, CockConfig.EVENT_ROCKET_MAX_DURATION)
         initial_boost = 20.0
@@ -224,9 +228,10 @@ class CockExtension(ModuleExtension):
         new_length_after_boost = await self.get_cock_length(chat_id, user_id)
         session.add(cock_state)
         await session.commit()
-        return self.S["cock"]["event"]["rocket"]["message"].format(initial_boost=initial_boost, new_length=new_length_after_boost, duration=cock_state.event_duration)
+        return self.S["cock"]["event"]["rocket"]["message"].format(user=user_mention, initial_boost=initial_boost, new_length=new_length_after_boost, duration=cock_state.event_duration)
 
     async def event_magnetic(self, bot, chat_id, user_id, current_length, session, cock_state_self):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         participants = await self.get_all_participants(chat_id)
         if len(participants) < 2: return None
 
@@ -261,31 +266,35 @@ class CockExtension(ModuleExtension):
             await session.commit()
 
             target_user_mention = await fetch_user(bot, target_user_id, with_link=True)
-            return self.S["cock"]["event"]["magnetic"].format(target_user=target_user_mention, change=actual_lost_by_target, new_length=cock_state_self.cock_size)
+            return self.S["cock"]["event"]["magnetic"].format(user=user_mention, target_user=target_user_mention, change=actual_lost_by_target, new_length=cock_state_self.cock_size)
         return None
 
     async def event_shrink_ray(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         new_length = round(max(float(CockConfig.MIN_COCK_SIZE), current_length / 2), 1)
         await self.set_cock_length(chat_id, user_id, new_length, absolute=True)
-        return self.S["cock"]["event"]["shrink_ray"].format(new_length=new_length)
+        return self.S["cock"]["event"]["shrink_ray"].format(user=user_mention, new_length=new_length)
 
     async def event_growth_spurt(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         change = random.randint(5, 15)
         await self.set_cock_length(chat_id, user_id, float(change))
         new_length = await self.get_cock_length(chat_id, user_id)
-        return self.S["cock"]["event"]["growth_spurt"].format(change=change, new_length=new_length)
+        return self.S["cock"]["event"]["growth_spurt"].format(user=user_mention, change=change, new_length=new_length)
 
     async def event_phantom_shrink(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         change = random.randint(5, 15)
         await self.set_cock_length(chat_id, user_id, -float(change))
         new_length = await self.get_cock_length(chat_id, user_id)
-        return self.S["cock"]["event"]["phantom_shrink"].format(change=change, new_length=new_length)
+        return self.S["cock"]["event"]["phantom_shrink"].format(user=user_mention, change=change, new_length=new_length)
 
     async def event_black_hole(self, bot, chat_id, user_id, current_length, session, cock_state):
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         change = random.randint(2, 10)
         await self.set_cock_length(chat_id, user_id, -float(change))
         new_length = await self.get_cock_length(chat_id, user_id)
-        return self.S["cock"]["event"]["black_hole"].format(change=change, new_length=new_length)
+        return self.S["cock"]["event"]["black_hole"].format(user=user_mention, change=change, new_length=new_length)
 
     async def event_average_recalibration(self, bot, chat_id, user_id, current_length, session, cock_state):
         user_mention = await fetch_user(bot, user_id, with_link=True)
@@ -439,32 +448,35 @@ class CockExtension(ModuleExtension):
     async def join_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
         user_id = message.from_user.id
+        user_mention = await fetch_user(bot, user_id, with_link=True)
         participants = await self.get_participants(chat_id)
 
         if user_id in participants:
             await message.reply(self.S["cock"]["join"]["already"])
         else:
             await self.set_participation(chat_id, user_id, True)
-            await message.reply(self.S["cock"]["join"]["ok"].format(default_size=CockConfig.DEFAULT_COCK_SIZE))
+            await message.reply(self.S["cock"]["join"]["ok"].format(user=user_mention, default_size=CockConfig.DEFAULT_COCK_SIZE))
 
     @command("cockleave")
     async def leave_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
         user_id = message.from_user.id
+        user_mention = await fetch_user(bot, user_id, with_link=True)
 
         async with self.db.session_maker() as session:
             cock_state = await session.get(CockState, (chat_id, user_id))
             if cock_state and cock_state.is_participating:
                 await session.delete(cock_state)
                 await session.commit()
-                await message.reply(self.S["cock"]["leave"]["ok"])
+                await message.reply(self.S["cock"]["leave"]["ok"].format(user=user_mention))
             else:
-                await message.reply(self.S["cock"]["leave"]["not_participant"])
+                await message.reply(self.S["cock"]["leave"]["not_participant"].format(user=user_mention))
     
     @command("cock")
     async def cock_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
         user_id = message.from_user.id
+        user_mention = await fetch_user(bot, user_id, with_link=True)
 
         async with self.db.session_maker() as session:
             cock_state = await session.scalar(
@@ -472,7 +484,7 @@ class CockExtension(ModuleExtension):
             )
 
             if not cock_state or not cock_state.is_participating:
-                await message.reply(self.S["cock"]["not_participant"].format(default_size=CockConfig.DEFAULT_COCK_SIZE))
+                await message.reply(self.S["cock"]["not_participant"].format(user=user_mention, default_size=CockConfig.DEFAULT_COCK_SIZE))
                 return
 
             now = datetime.utcnow()
@@ -481,11 +493,10 @@ class CockExtension(ModuleExtension):
                     time_remaining = timedelta(hours=CockConfig.COOLDOWN_HOURS) - (now - cock_state.cooldown)
                     hours, remainder = divmod(int(time_remaining.total_seconds()), 3600)
                     minutes, _ = divmod(remainder, 60)
-                    await message.reply(self.S["cock"]["cooldown"].format(hours=hours, minutes=minutes))
+                    await message.reply(self.S["cock"]["cooldown"].format(user=user_mention, hours=hours, minutes=minutes))
                     return
 
             current_length = float(cock_state.cock_size)
-            user_mention = await fetch_user(bot, user_id, with_link=True)
 
             resolution_message_parts = []
             previous_active_event_for_resolution = cock_state.active_event
@@ -496,6 +507,7 @@ class CockExtension(ModuleExtension):
                 if previous_event_data_for_resolution:
                     data = json.loads(previous_event_data_for_resolution)
                     resolution_message_parts.append(self.S["cock"]["event"]["phantom_limb"]["reveal"].format(
+                        user=user_mention, 
                         tiny_real_change=data["tiny_real_change_applied"], 
                         final_real_length=data["final_real_length"]
                     ))
@@ -560,6 +572,7 @@ class CockExtension(ModuleExtension):
                     await self.set_cock_length(chat_id, user_id, delta)
                     new_length_after_growth = await self.get_cock_length(chat_id, user_id)
                     result_message = self.S["cock"]["event"]["rocket"]["no_change"].format(
+                        user=user_mention,
                         new_length=new_length_after_growth, 
                         remain=cock_state.event_duration
                     )
@@ -568,6 +581,7 @@ class CockExtension(ModuleExtension):
                     await self.set_cock_length(chat_id, user_id, new_total_length_after_explosion, absolute=True, skip_event_duration_decrement=True)
                     
                     result_message = self.S["cock"]["event"]["rocket"]["change"].format(
+                        user=user_mention,
                         new_length=new_total_length_after_explosion
                     )
                     cock_state.active_event = None
@@ -579,6 +593,7 @@ class CockExtension(ModuleExtension):
                 await self.set_cock_length(chat_id, user_id, change_delta)
                 new_length = await self.get_cock_length(chat_id, user_id)
                 result_message = self.S["cock"]["change"].format(
+                    user=user_mention,
                     new_length=round(new_length, 1), 
                     change_sign="+" if change_delta >=0 else "",
                     change=round(change_delta, 1)
