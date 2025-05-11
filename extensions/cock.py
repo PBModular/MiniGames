@@ -108,9 +108,8 @@ class CockExtension(ModuleExtension):
             if cock_state.active_event:
                 return None
 
-            events = []
-
-            events.extend([
+            events_config = []
+            events_config.extend([
                 (self.event_micro, CockConfig.PROB_MICRO) if current_length > (CockConfig.MAX_COCK_SIZE * 0.7) else None,
                 (self.event_rubber, CockConfig.PROB_RUBBER),
                 (self.event_teleport, CockConfig.PROB_TELEPORT),
@@ -123,25 +122,31 @@ class CockExtension(ModuleExtension):
                 (self.event_black_hole, CockConfig.PROB_BLACK_HOLE)
             ])
 
-            events = list(filter(None, events))
+            events_config = list(filter(None, events_config))
 
-            eligible_events = [(event, weight) for event, weight in events if random.random() < weight]
+            eligible_events = [(event_func, weight) for event_func, weight in events_config if random.random() < weight]
 
-            if eligible_events:
-                total_weight = sum(weight for _, weight in eligible_events)
-                rand_choice = random.uniform(0, total_weight)
-                cumulative_weight = 0
+            if not eligible_events:
+                return None
 
-                for event, weight in eligible_events:
-                    cumulative_weight += weight
-                    if rand_choice <= cumulative_weight:
-                        chosen_event = event
-                        break
+            total_weight = sum(weight for _, weight in eligible_events)
+            if total_weight == 0:
+                return None
 
-                special_event_message = await chosen_event(bot, chat_id, user_id, current_length)
-                if special_event_message:
-                    return special_event_message
+            rand_choice = random.uniform(0, total_weight)
+            cumulative_weight = 0.0
+            chosen_event_func = None
 
+            for event_func, weight in eligible_events:
+                cumulative_weight += weight
+                if rand_choice <= cumulative_weight:
+                    chosen_event_func = event_func
+                    break
+            
+            if chosen_event_func:
+                special_event_message = await chosen_event_func(bot, chat_id, user_id, current_length)
+                return special_event_message 
+            
             return None
 
     async def event_micro(self, bot, chat_id, user_id, current_length):
