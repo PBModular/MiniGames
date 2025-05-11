@@ -216,12 +216,18 @@ class CockExtension(ModuleExtension):
         if len(participants) < 2:
             return None
 
-        possible_targets = [p for p in participants if p[0] != user_id and p[1] > 3]
+        possible_targets = [p for p in participants if p[0] != user_id and p[1] > 3.0]
         if not possible_targets:
             return None
 
         target_user_id, target_length = random.choice(possible_targets)
-        change = random.randint(1, (target_length * 0.6))
+        
+        max_steal_amount = target_length * 0.6
+        if max_steal_amount < 1.0:
+            return None
+        
+        steal_amount = random.uniform(1.0, max_steal_amount)
+        steal_amount = round(steal_amount, 1)
 
         async with self.db.session_maker() as session:
             user_cock_state = await session.scalar(
@@ -231,15 +237,24 @@ class CockExtension(ModuleExtension):
                 select(CockState).where(CockState.chat_id == chat_id, CockState.user_id == target_user_id)
             )
 
-            user_cock_state.cock_size += change
-            target_cock_state.cock_size -= change
+            actual_lost_by_target = min(steal_amount, target_cock_state.cock_size - float(CockConfig.MIN_COCK_SIZE))
+            actual_lost_by_target = max(0.0, actual_lost_by_target)
 
-            session.add(user_cock_state)
-            session.add(target_cock_state)
-            await session.commit()
+            if actual_lost_by_target > 0:
+                user_cock_state.cock_size += actual_lost_by_target
+                target_cock_state.cock_size -= actual_lost_by_target
 
-        target_user = await fetch_user(bot, target_user_id, with_link=True)
-        return self.S["cock"]["event"]["magnetic"].format(target_user=target_user, change=change)
+                user_cock_state.cock_size = max(float(CockConfig.MIN_COCK_SIZE), round(user_cock_state.cock_size, 1))
+                target_cock_state.cock_size = max(float(CockConfig.MIN_COCK_SIZE), round(target_cock_state.cock_size, 1))
+                
+                session.add(user_cock_state)
+                session.add(target_cock_state)
+                await session.commit()
+
+                target_user_mention = await fetch_user(bot, target_user_id, with_link=True)
+                return self.S["cock"]["event"]["magnetic"].format(target_user=target_user_mention, change=round(actual_lost_by_target,1))
+            else:
+                return None # Or a message like "magnetic field was too weak!"
 
     async def event_shrink_ray(self, bot, chat_id, user_id, current_length):
         change = round(current_length / 2, 1)
