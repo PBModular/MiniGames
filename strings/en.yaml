@@ -4,7 +4,7 @@ help: |
   • <code>/cockjoin</code>
   <b>Description:</b> Ready to whip it out? Join the game and get your starter piece.
   • <code>/cockleave</code>
-  <b>Description:</b> Had enough? Tuck it away and leave the game. Your legend (or cautionary tale) remains.
+  <b>Description:</b> Had enough? Tuck it away and leave the game. Your legend remains.
   • <code>/cock</code>
   <b>Description:</b> Time to play! See if your manhood grows, shrinks, or does something utterly bizarre.
   • <code>/cockstat</code>
@@ -47,9 +47,9 @@ cock:
       no_change:
         - "Still rocketing, {user}! Your magnificent member is holding steady at {new_length} cm. {remain} turns left on this cosmic voyage!"
         - "The ascent continues! {user}, your cock remains at an impressive {new_length} cm. {remain} more turns in orbit!"
-        - "To the moon, {user}! Your rocket cock is maintaining altitude at {new_length} cm. {remain} turns before potential atmospheric re-entry (or explosion)."
+        - "To the moon, {user}! Your rocket cock is maintaining altitude at {new_length} cm. {remain} turns before potential atmospheric explosion."
       change:
-        - "KABOOM! ...or was that a sad 'pffft'? {user}, your rocket cock has spectacularly exploded (or fizzled out). It's now a rather underwhelming {new_length} cm. Back to Earth with you."
+        - "KABOOM! ...or was that a sad 'pffft'? {user}, your rocket cock has spectacularly exploded. It's now a rather underwhelming {new_length} cm. Back to Earth with you."
         - "Re-entry was rough, {user}! Your rocket adventure ends with a mangled {new_length} cm. Houston, we have a problem."
         - "Oops! {user}, your rocket seems to have hit some space debris. It's now a crumpled {new_length} cm. At least you tried."
     magnetic:
@@ -84,7 +84,7 @@ cock:
       reveal:
         - "...PSYCH! {user}, our apologies. Turns out our sensors were just excited. It *actually* changed by a measly {tiny_real_change} cm. Details, details. Your member is, in reality, {final_real_length} cm. So much for that miracle."
         - "Correction: {user}, there was a slight... exaggeration. The actual change was {tiny_real_change} cm, resulting in {final_real_length} cm. Our bad."
-        - "False alarm! {user}, the massive growth was just a trick of the light (or a faulty sensor). The real change was a tiny {tiny_real_change} cm. You're now at {final_real_length} cm. Don't believe everything you see!"
+        - "False alarm! {user}, the massive growth was just a trick of the light. The real change was a tiny {tiny_real_change} cm. You're now at {final_real_length} cm. Don't believe everything you see!"
     borrower:
       initial:
         - "Feeling a bit... inadequate, {user}? Fret not! The ever-so-generous (they weren't asked) {lender_user} has 'lent' you {borrowed_amount} cm of their prime meat for {duration} turns! Try not to get too attached, it's not really yours."
@@ -112,9 +112,9 @@ cock:
         - "What if the real treasure was the friends we made along the way... and not just size?"
         - "If a tree falls in the forest and no one is around to hear it, does my length matter?"
       resolve:
-        - "Ah, {user}, your cock has returned from its philosophical retreat, hopefully with some enlightenment (or at least its physical form). It's now a more tangible {new_length} cm. Welcome back to the material world, little guy!"
+        - "Ah, {user}, your cock has returned from its philosophical retreat, hopefully with some enlightenment. It's now a more tangible {new_length} cm. Welcome back to the material world, little guy!"
         - "The existential journey concludes! {user}, your member is back from the void, settling at {new_length} cm. Hopefully, it found some answers."
-        - "Snapping back to reality! {user}, your cock has finished its navel-gazing (or tip-gazing) and is now {new_length} cm. Back to business!"
+        - "Snapping back to reality! {user}, your cock has finished its navel-gazing and is now {new_length} cm. Back to business!"
     humblebrag_tax:
       payer_msg:
         - "Well, well, {user}, aren't you the cock of the walk with that impressive member! The Cockmunity Chest has decided your flagrant display of endowment requires a 'Humblebrag Tax' of {tax_amount} cm. Consider it a donation to the less fortunate."
@@ -129,7 +129,7 @@ cock:
         - "The redistributed wealth benefits {recipient_list_str}, who each pocket a neat {amount_each} cm. Thanks, big spender!"
         - "Sharing is caring (when forced)! {recipient_list_str} have each received {amount_each} cm from your 'Humblebrag Tax'."
       tax_vanished_no_recipients:
-        - "{user}, your {tax_amount} cm 'Humblebrag Tax' was collected, but alas, everyone else is apparently too well-off (or perhaps too proud) to accept charity. The funds have mysteriously disappeared into 'administrative fees'."
+        - "{user}, your {tax_amount} cm 'Humblebrag Tax' was collected, but alas, everyone else is apparently too too proud to accept charity. The funds have mysteriously disappeared into 'administrative fees'."
         - "Taxation without representation (for the recipients)! {user}, your {tax_amount} cm tax found no takers and has vanished into the ether."
         - "Well, this is awkward. {user}, we collected your {tax_amount} cm tax, but couldn't find anyone needy enough. It's... gone. Poof."
       tax_vanished_too_small_split:
@@ -140,7 +140,7 @@ cock:
       prompt:
         - "A strange urge overcomes you, {user}! You feel a confession brewing. Reveal it the next time you use /cock by typing `/cock [your confession]`."
         - "The truth wants out, {user}! A confession is bubbling up. Share it with `/cock [your confession]` on your next turn."
-        - "Spill the beans, {user}! A deep, dark (or not-so-dark) secret is yearning for release. Confess with `/cock [your confession]` next time!"
+        - "Spill the beans, {user}! A deep, dark secret is yearning for release. Confess with `/cock [your confession]` next time!"
       accepted:
         - "Ah, {user}, a bold confession: '{confession}'! The spirits are... amused. Your cock size remains unchanged by this revelation (this time!)."
         - "Well, that's off your chest, {user}! Confession: '{confession}'. The universe notes your candor. No size change for now."
@@ -158,11 +158,11 @@ cock:
       - "Hold up! You're already packing. No need to join twice, {user}!"
     ok:
       - "Alright, {user}, you're in! You've bravely whipped out a standard-issue {default_size} cm penis. Let's see what you make of it!"
-      - "Welcome to the game, {user}! Your starting equipment: one {default_size} cm cock. May it serve you well (or hilariously)!"
+      - "Welcome to the game, {user}! Your starting equipment: one {default_size} cm cock. May it serve you well!"
       - "Game on, {user}! You start with a respectable {default_size} cm. Go forth and... grow?"
   leave:
     ok:
-      - "It's been emotional, {user}. Your cock has been respectfully (or hilariously, depending on its history) retired. You've left the game."
+      - "It's been emotional, {user}. Your cock has been respectfully retired. You've left the game."
       - "So long, farewell, {user}! Your member has been tucked away. You are now out of the cock game."
       - "And... scene! {user}, you've exited the cock arena. Your measurements will be archived for posterity."
     not_participant:
@@ -178,7 +178,7 @@ cock:
     not_eligible_size:
       - "Not so fast, {user}! You need at least {required_size} cm to Prestige. You're currently at {current_size} cm. Keep growing that legend!"
     already_done:
-      - "You've already achieved PRESTIGE and bear the badge: <b>[{badge}]</b>, {user}! One such honor per lifetime (in this version of reality)!"
+      - "You've already achieved PRESTIGE and bear the badge: <b>[{badge}]</b>, {user}! One such honor per lifetime!"
     badge_too_long:
       - "Whoa there, wordsmith! Your badge name can be at most {max_len} characters. Brevity is the soul of wit, and badges!"
     no_badge_name:
@@ -192,13 +192,13 @@ cock:
       - "The leaderboard is empty! This chat needs more... participants. Get your cocks out, people!"
     list_header: |
       <b>🏆 The Official Cock Championship Leaderboard 🏆</b>
-      <i>(Sizes approximate, egos inflated)</i>
+      <i>(Sizes approximate)</i>
     list_entry: |
       {place}. {user_display_linked} - {cock_length_display}
     badge_display_format: "[{badge}]"
     average: |
       
-      <i>The collective testosterone in this chat averages out to a mighty (or meek) {average} cm.</i>
+      <i>The collective testosterone in this chat averages out to a mighty {average} cm.</i>
     event_suffix:
       rubber: " (Rubbery!)"
       rocket: " (Rocketing!)"
@@ -225,7 +225,7 @@ cock:
     neutral:
       - "Barely a quiver! {user}, your cock is holding steady at {new_length} cm (Change: {change_sign}{change} cm). Anticlimactic!"
       - "Status quo! {user}, your member remains at {new_length} cm (Shift: {change_sign}{change} cm). As you were."
-      - "No change, no gain (or loss)! {user}, still rocking {new_length} cm (Difference: {change_sign}{change} cm). Perfectly balanced."
+      - "No change, no gain, or loss! {user}, still rocking {new_length} cm (Difference: {change_sign}{change} cm). Perfectly balanced."
 
 tictactoe:
   already_game: The game is already in progress!
