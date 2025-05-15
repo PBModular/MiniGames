@@ -10,7 +10,7 @@ class CockState(Base):
     __tablename__ = 'cock_state'
     chat_id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(primary_key=True)
-    cock_size: Mapped[float] = mapped_column(nullable=True)
+    cock_size: Mapped[float] = mapped_column(nullable=True, default=lambda: float(CockConfig.DEFAULT_COCK_SIZE))
     is_participating: Mapped[bool]
     active_event: Mapped[Optional[str]] = mapped_column(nullable=True)
     event_duration: Mapped[int] = mapped_column(default=0)
