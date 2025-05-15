@@ -10,6 +10,7 @@ from sqlalchemy import select, delete, func
 from datetime import datetime, timedelta
 import random
 import json
+import html
 
 class CockExtension(ModuleExtension):
     @property
@@ -686,6 +687,19 @@ class CockExtension(ModuleExtension):
                     else:
                         main_roll_message = recall_msg_part 
 
+            if CockConfig.ENABLE_PRESTIGE_SYSTEM:
+                final_cock_state_for_prestige = await session.get(CockState, (chat_id, user_id))
+                if final_cock_state_for_prestige and not final_cock_state_for_prestige.prestige_badge:
+                    prestige_threshold = CockConfig.MAX_COCK_SIZE * CockConfig.PRESTIGE_SIZE_MULTIPLIER
+                    current_size_for_prestige = float(final_cock_state_for_prestige.cock_size or CockConfig.DEFAULT_COCK_SIZE)
+                    if current_size_for_prestige >= prestige_threshold:
+                        eligibility_message = get_s(self.S, "cock.prestige.eligible",
+                                                    user=user_mention,
+                                                    size=round(current_size_for_prestige, 1),
+                                                    command_name="cockprestige",
+                                                    default_size=CockConfig.DEFAULT_COCK_SIZE)
+                        main_roll_message = f"{main_roll_message}\n\n{eligibility_message}" if main_roll_message else eligibility_message
+
             if main_roll_message:
                 await message.reply(main_roll_message)
 
@@ -693,12 +707,69 @@ class CockExtension(ModuleExtension):
             session.add(cock_state)
             await session.commit()
 
+    @command("cockprestige")
+    async def prestige_cmd(self, bot: Client, message: Message):
+        if not CockConfig.ENABLE_PRESTIGE_SYSTEM:
+            await message.reply(get_s(self.S, "cock.prestige.disabled"))
+            return
+
+        chat_id = message.chat.id
+        user_id = message.from_user.id
+        user_mention = await fetch_user(bot, user_id, with_link=True)
+
+        command_parts = message.text.split(maxsplit=1)
+        badge_name_arg = command_parts[1].strip() if len(command_parts) > 1 else None
+
+        async with self.db.session_maker() as session:
+            cock_state = await session.get(CockState, (chat_id, user_id), with_for_update=True)
+
+            if not cock_state or not cock_state.is_participating:
+                await message.reply(get_s(self.S, "cock.not_participant_generic", user=user_mention))
+                return
+
+            if cock_state.prestige_badge:
+                await message.reply(get_s(self.S, "cock.prestige.already_done", user=user_mention, badge=cock_state.prestige_badge))
+                return
+
+            if not badge_name_arg:
+                await message.reply(get_s(self.S, "cock.prestige.no_badge_name", command_name=command_parts[0], max_len=CockConfig.PRESTIGE_BADGE_MAX_LENGTH))
+                return
+
+            if len(badge_name_arg) > CockConfig.PRESTIGE_BADGE_MAX_LENGTH:
+                await message.reply(get_s(self.S, "cock.prestige.badge_too_long", max_len=CockConfig.PRESTIGE_BADGE_MAX_LENGTH))
+                return
+
+            prestige_threshold = CockConfig.MAX_COCK_SIZE * CockConfig.PRESTIGE_SIZE_MULTIPLIER
+            current_size = float(cock_state.cock_size if cock_state.cock_size is not None else CockConfig.DEFAULT_COCK_SIZE)
+
+            if current_size < prestige_threshold:
+                await message.reply(get_s(self.S, "cock.prestige.not_eligible_size",
+                                        user=user_mention,
+                                        required_size=round(prestige_threshold,1),
+                                        current_size=round(current_size,1)))
+                return
+
+            cock_state.cock_size = float(CockConfig.DEFAULT_COCK_SIZE)
+            cock_state.prestige_badge = badge_name_arg
+            cock_state.active_event = None
+            cock_state.event_duration = 0
+            cock_state.event_data = None
+            cock_state.cooldown = datetime.utcnow()
+
+            session.add(cock_state)
+            await session.commit()
+
+            await message.reply(get_s(self.S, "cock.prestige.success",
+                                      user=user_mention,
+                                      badge=badge_name_arg,
+                                      new_size=CockConfig.DEFAULT_COCK_SIZE))
+
     @command("cockstat")
     async def cockstat_cmd(self, bot: Client, message: Message):
         chat_id = message.chat.id
         async with self.db.session_maker() as session:
             participants_result = await session.execute(
-                select(CockState.user_id, CockState.cock_size, CockState.active_event, CockState.event_data)
+                select(CockState.user_id, CockState.cock_size, CockState.active_event, CockState.event_data, CockState.prestige_badge)
                 .where(CockState.chat_id == chat_id, CockState.is_participating == True)
             )
             participants_data = participants_result.all()
@@ -714,32 +785,44 @@ class CockExtension(ModuleExtension):
             return
 
         processed_participants = []
-        for p_id, p_size, p_active_event, p_event_data_str in participants_data:
+        for p_id, p_size, p_active_event, p_event_data_str, p_badge in participants_data:
             size = float(p_size) if p_size is not None else float(CockConfig.DEFAULT_COCK_SIZE)
-            processed_participants.append( (p_id, size, p_active_event, p_event_data_str) )
+            processed_participants.append( (p_id, size, p_active_event, p_event_data_str, p_badge) )
 
         sorted_participants = sorted(processed_participants, key=lambda x: x[1], reverse=True)
 
         stats_message_parts = [get_s(self.S, "cock.stat.list_header")]
-        for place, (user_id, cock_length, active_event, event_data_str) in enumerate(sorted_participants, start=1):
+        for place, (user_id, cock_length, active_event, event_data_str, prestige_badge) in enumerate(sorted_participants, start=1):
+            user_obj = await bot.get_users(user_id)
+            raw_user_name = user_obj.first_name
+            if user_obj.last_name:
+                raw_user_name += f" {user_obj.last_name}"
+            raw_user_name = raw_user_name.strip()
+
+            badge_display_str = ""
+            if prestige_badge and CockConfig.ENABLE_PRESTIGE_SYSTEM:
+                badge_display_str = get_s(self.S, "cock.stat.badge_display_format", badge=html.escape(prestige_badge)) + " "
+
+            display_name_for_link = html.escape(f"{badge_display_str}{raw_user_name}".strip())
+            linked_user_display = f"<a href='tg://user?id={user_id}'>{display_name_for_link}</a>"
+
             display_length_str = f"{round(cock_length, 1)} cm"
             if active_event == "existential_crisis_active" and event_data_str:
                 try:
                     crisis_data = json.loads(event_data_str)
                     quote = crisis_data.get('quote', 'In Deep Thought')
-                    display_length_str = f"({quote[:25]}...)" if len(quote) > 28 else f"({quote})"
+                    display_length_str = f"({html.escape(quote[:25])}...)" if len(quote) > 28 else f"({html.escape(quote)})"
                 except json.JSONDecodeError:
                     display_length_str = "(Deep Thoughts)"
             elif active_event == "rubber":
-                 display_length_str += get_s(self.S, "cock.stat.event_suffix.rubber")
+                display_length_str += get_s(self.S, "cock.stat.event_suffix.rubber")
             elif active_event == "rocket":
-                 display_length_str += get_s(self.S, "cock.stat.event_suffix.rocket")
+                display_length_str += get_s(self.S, "cock.stat.event_suffix.rocket")
 
-            profile_link = await fetch_user(bot, user_id, with_link=False)
             stats_message_parts.append(
                 get_s(self.S, "cock.stat.list_entry",
                     place=place, 
-                    profile_link=profile_link, 
+                    user_display_linked=linked_user_display, 
                     cock_length_display=display_length_str
                 )
             )

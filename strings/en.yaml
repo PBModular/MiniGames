@@ -9,6 +9,8 @@ help: |
   <b>Description:</b> Time to play! See if your manhood grows, shrinks, or does something utterly bizarre.
   • <code>/cockstat</code>
   <b>Description:</b> Who's packing heat and who's just got... potential? View the current pecking order.
+  • <code>/cockprestige <badge_name></code>
+  <b>Description:</b> Reached epic size? Reset to default ({default_size} cm) and claim a custom badge!
 
   <b>❎TicTacToe:</b>
   • <code>/tictactoe</code>
@@ -167,6 +169,22 @@ cock:
       - "Hold on, {user}! You can't leave if you never joined. No cock to delete here, buddy."
       - "Leaving what, {user}? You're not even in the game! To quit, one must first begin."
       - "Trying to leave, {user}? You gotta join first! No phantom cocks allowed."
+  prestige:
+    disabled: Prestige is disabled!
+    eligible:
+      - "🌟 Woah, {user}! Your prowess is legendary, reaching {size} cm! You're eligible to Prestige! Use <code>/{command_name} YOUR_BADGE_NAME</code> to reset to {default_size} cm and etch your chosen badge into history!"
+    success:
+      - "✨ {user} has achieved PRESTIGE! ✨\nYour size resets to {new_size} cm, but you now bear the legendary badge: <b>[{badge}]</b>! Your legend grows anew!"
+    not_eligible_size:
+      - "Not so fast, {user}! You need at least {required_size} cm to Prestige. You're currently at {current_size} cm. Keep growing that legend!"
+    already_done:
+      - "You've already achieved PRESTIGE and bear the badge: <b>[{badge}]</b>, {user}! One such honor per lifetime (in this version of reality)!"
+    badge_too_long:
+      - "Whoa there, wordsmith! Your badge name can be at most {max_len} characters. Brevity is the soul of wit, and badges!"
+    no_badge_name:
+      - "You need to provide a name for your prestigious badge! Usage: <code>{command_name} <Your Badge Name></code> (max {max_len} chars)."
+  not_participant_generic:
+    - "Hold your horses, {user}! You need to be in the game to do that. Use <code>/cockjoin</code> to get started."
   stat:
     no_participants:
       - "This chat is a barren wasteland of cocklessness! No one's playing yet. Be the first!"
@@ -176,7 +194,8 @@ cock:
       <b>🏆 The Official Cock Championship Leaderboard 🏆</b>
       <i>(Sizes approximate, egos inflated)</i>
     list_entry: |
-      {place}. {profile_link} - {cock_length_display}
+      {place}. {user_display_linked} - {cock_length_display}
+    badge_display_format: "[{badge}]"
     average: |
       
       <i>The collective testosterone in this chat averages out to a mighty (or meek) {average} cm.</i>

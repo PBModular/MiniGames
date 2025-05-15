@@ -10,6 +10,11 @@ class CockConfig:
     # Cooldown time (in hours)
     COOLDOWN_HOURS = 24
 
+    # Prestige system
+    ENABLE_PRESTIGE_SYSTEM = True
+    PRESTIGE_SIZE_MULTIPLIER = 1.20  # Multiply MAX_COCK_SIZE by this to get prestige threshold
+    PRESTIGE_BADGE_MAX_LENGTH = 20
+
     # Calculation constants
     MAX_PROB_COCK_SIZE_INCREASE = 0.95
     MIN_PROB_COCK_SIZE_INCREASE = 0.35
